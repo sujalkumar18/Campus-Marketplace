@@ -88,20 +88,32 @@ export async function registerRoutes(
   });
 
   app.post(api.chats.create.path, async (req, res) => {
-    const { listingId } = req.body;
-    // Expect buyerId in body for MVP simplicity (or header)
-    const buyerId = Number(req.body.buyerId); 
-    
-    const listing = await storage.getListing(listingId);
-    if (!listing) return res.status(404).json({ message: "Listing not found" });
-    
-    // Check if chat exists
-    let chat = await storage.getChat(listingId, buyerId);
-    if (!chat) {
-      chat = await storage.createChat(listingId, buyerId, listing.sellerId);
+    try {
+      const { listingId, buyerId } = req.body;
+      
+      if (!listingId || !buyerId) {
+        return res.status(400).json({ message: "listingId and buyerId required" });
+      }
+      
+      const buyerIdNum = Number(buyerId);
+      if (isNaN(buyerIdNum)) {
+        return res.status(400).json({ message: "buyerId must be a valid number" });
+      }
+      
+      const listing = await storage.getListing(Number(listingId));
+      if (!listing) return res.status(404).json({ message: "Listing not found" });
+      
+      // Check if chat exists
+      let chat = await storage.getChat(Number(listingId), buyerIdNum);
+      if (!chat) {
+        chat = await storage.createChat(Number(listingId), buyerIdNum, listing.sellerId);
+      }
+      
+      res.status(201).json(chat);
+    } catch (err) {
+      console.error("Error creating chat:", err);
+      res.status(500).json({ message: "Error creating chat" });
     }
-    
-    res.status(201).json(chat);
   });
 
   app.get(api.chats.getMessages.path, async (req, res) => {
@@ -110,16 +122,28 @@ export async function registerRoutes(
   });
 
   app.post(api.chats.sendMessage.path, async (req, res) => {
-    const { content } = req.body;
-    // Expect senderId in body for MVP simplicity
-    const senderId = Number(req.body.senderId);
-    
-    const message = await storage.createMessage({
-      chatId: Number(req.params.id),
-      senderId,
-      content
-    });
-    res.status(201).json(message);
+    try {
+      const { content, senderId } = req.body;
+      
+      if (!content || !senderId) {
+        return res.status(400).json({ message: "content and senderId required" });
+      }
+      
+      const senderIdNum = Number(senderId);
+      if (isNaN(senderIdNum)) {
+        return res.status(400).json({ message: "senderId must be a valid number" });
+      }
+      
+      const message = await storage.createMessage({
+        chatId: Number(req.params.id),
+        senderId: senderIdNum,
+        content
+      });
+      res.status(201).json(message);
+    } catch (err) {
+      console.error("Error sending message:", err);
+      res.status(500).json({ message: "Error sending message" });
+    }
   });
 
   // Seed Data
