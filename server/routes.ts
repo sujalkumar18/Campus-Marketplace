@@ -1,16 +1,181 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { api } from "@shared/routes";
+import { z } from "zod";
+import { insertListingSchema, insertUserSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
 
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
+  // Auth Middleware (Simple MVP implementation)
+  // In a real app, use passport or proper session middleware
+  // Here we'll just trust the client sends a userId header for simplicity if avoiding full auth setup
+  // OR we implement a basic session based login.
+  // Given user asked for Firebase, and we are pivoting to local DB, let's do a simple session-like simulation or actual session.
+  // The template has express-session and passport installed. Let's use it?
+  // Fast mode: Custom simple auth is often faster than debugging passport configuration issues in 1 turn.
+  // We'll use a simple in-memory session or just return the user object on login and expect client to store it.
+  
+  // Auth Routes
+  app.post(api.auth.register.path, async (req, res) => {
+    try {
+      const input = api.auth.register.input.parse(req.body);
+      const existing = await storage.getUserByUsername(input.username);
+      if (existing) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
+      const user = await storage.createUser(input);
+      res.status(201).json(user);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.post(api.auth.login.path, async (req, res) => {
+    const { username, password } = req.body;
+    const user = await storage.getUserByUsername(username);
+    if (!user || user.password !== password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    res.json(user);
+  });
+
+  // Listings Routes
+  app.get(api.listings.list.path, async (req, res) => {
+    const filters = req.query as { category?: string; search?: string };
+    const listings = await storage.getListings(filters);
+    res.json(listings);
+  });
+
+  app.get(api.listings.get.path, async (req, res) => {
+    const listing = await storage.getListing(Number(req.params.id));
+    if (!listing) return res.status(404).json({ message: "Listing not found" });
+    res.json(listing);
+  });
+
+  app.post(api.listings.create.path, async (req, res) => {
+    try {
+      const input = api.listings.create.input.parse(req.body);
+      const listing = await storage.createListing(input);
+      res.status(201).json(listing);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ message: err.errors[0].message });
+      }
+      throw err;
+    }
+  });
+
+  app.patch(api.listings.update.path, async (req, res) => {
+    const listing = await storage.updateListing(Number(req.params.id), req.body);
+    if (!listing) return res.status(404).json({ message: "Listing not found" });
+    res.json(listing);
+  });
+
+  // Chats Routes
+  app.get(api.chats.list.path, async (req, res) => {
+    // Expect userId in query for MVP simplicity
+    const userId = Number(req.query.userId);
+    if (!userId) return res.status(400).json({ message: "userId required" });
+    const chats = await storage.getChats(userId);
+    res.json(chats);
+  });
+
+  app.post(api.chats.create.path, async (req, res) => {
+    const { listingId } = req.body;
+    // Expect buyerId in body for MVP simplicity (or header)
+    const buyerId = Number(req.body.buyerId); 
+    
+    const listing = await storage.getListing(listingId);
+    if (!listing) return res.status(404).json({ message: "Listing not found" });
+    
+    // Check if chat exists
+    let chat = await storage.getChat(listingId, buyerId);
+    if (!chat) {
+      chat = await storage.createChat(listingId, buyerId, listing.sellerId);
+    }
+    
+    res.status(201).json(chat);
+  });
+
+  app.get(api.chats.getMessages.path, async (req, res) => {
+    const messages = await storage.getMessages(Number(req.params.id));
+    res.json(messages);
+  });
+
+  app.post(api.chats.sendMessage.path, async (req, res) => {
+    const { content } = req.body;
+    // Expect senderId in body for MVP simplicity
+    const senderId = Number(req.body.senderId);
+    
+    const message = await storage.createMessage({
+      chatId: Number(req.params.id),
+      senderId,
+      content
+    });
+    res.status(201).json(message);
+  });
+
+  // Seed Data
+  await seedDatabase();
 
   return httpServer;
+}
+
+async function seedDatabase() {
+  const existingUsers = await storage.getUserByUsername("student1");
+  if (!existingUsers) {
+    const user1 = await storage.createUser({
+      username: "student1",
+      password: "password123",
+      college: "Alliance University",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=student1"
+    });
+    
+    const user2 = await storage.createUser({
+      username: "student2",
+      password: "password123",
+      college: "Alliance University",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=student2"
+    });
+
+    await storage.createListing({
+      sellerId: user1.id,
+      title: "Engineering Mechanics Textbook",
+      description: "First year engineering mechanics book, good condition.",
+      price: 450,
+      category: "Books",
+      imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
+      type: "sell",
+      status: "available"
+    });
+
+    await storage.createListing({
+      sellerId: user2.id,
+      title: "Scientific Calculator",
+      description: "Casio fx-991EX Classwiz, rarely used.",
+      price: 800,
+      category: "Calculators",
+      imageUrl: "https://images.unsplash.com/photo-1587145820266-a7951b306098",
+      type: "sell",
+      status: "available"
+    });
+    
+    await storage.createListing({
+      sellerId: user1.id,
+      title: "Lab Coat & Goggles",
+      description: "Chemistry lab coat size M + safety goggles.",
+      price: 300,
+      category: "Lab Equipment",
+      imageUrl: "https://images.unsplash.com/photo-1581093458891-773153cf8370",
+      type: "rent",
+      status: "available"
+    });
+  }
 }
