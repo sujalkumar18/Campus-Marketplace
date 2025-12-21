@@ -14,7 +14,7 @@ const formSchema = insertListingSchema.extend({
 
 type FormData = z.infer<typeof formSchema>;
 
-const CATEGORIES = ["Books", "Notes", "Calculators", "Lab Equipment", "Hostel Items"];
+const CATEGORIES = ["Books", "Notes", "Calculators", "Lab Equipment", "Other Items"];
 
 export default function Sell() {
   const [, setLocation] = useLocation();
@@ -56,7 +56,7 @@ export default function Sell() {
       <main className="px-4 py-6 max-w-md mx-auto">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           
-          {/* Image Upload Simulation */}
+          {/* Image Upload */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-foreground ml-1">Photo</label>
             <div className="relative aspect-video rounded-2xl bg-muted/50 border-2 border-dashed border-border hover:border-primary/50 transition-colors overflow-hidden group">
@@ -67,13 +67,32 @@ export default function Sell() {
                   <div className="w-12 h-12 rounded-full bg-background flex items-center justify-center shadow-sm mb-2 group-hover:scale-110 transition-transform">
                     <Camera className="w-6 h-6" />
                   </div>
-                  <span className="text-xs font-medium">Paste image URL below</span>
+                  <span className="text-xs font-medium">Upload or paste image URL</span>
                 </div>
               )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const formData = new FormData();
+                    formData.append("file", file);
+                    try {
+                      const res = await fetch("/api/upload", { method: "POST", body: formData });
+                      const data = await res.json();
+                      if (data.url) setValue("imageUrl", data.url);
+                    } catch (err) {
+                      console.error("Upload failed:", err);
+                    }
+                  }
+                }}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
             </div>
             <input
               {...register("imageUrl")}
-              placeholder="https://example.com/image.jpg"
+              placeholder="https://example.com/image.jpg or upload above"
               className="w-full px-4 py-3 rounded-xl bg-muted/30 border border-border focus:outline-none focus:border-primary text-sm"
             />
             {errors.imageUrl && <p className="text-xs text-destructive">{errors.imageUrl.message}</p>}

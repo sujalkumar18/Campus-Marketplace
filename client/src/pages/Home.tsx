@@ -7,7 +7,7 @@ import { useChats, useCreateChat } from "@/hooks/use-chats";
 import { Search, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
 
-const CATEGORIES = ["All", "Books", "Notes", "Calculators", "Lab Equipment", "Hostel Items"];
+const CATEGORIES = ["All", "Books", "Notes", "Calculators", "Lab Equipment", "Other Items"];
 
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");

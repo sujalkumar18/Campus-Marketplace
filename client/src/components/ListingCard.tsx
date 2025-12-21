@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Tag, Book, Calculator, FlaskConical, Bed, FileText } from "lucide-react";
+import { Tag, Book, Calculator, FlaskConical, Package, FileText } from "lucide-react";
 import type { Listing } from "@shared/schema";
 
 interface ListingCardProps {
@@ -12,7 +12,7 @@ const CATEGORY_ICONS: Record<string, any> = {
   Notes: FileText,
   Calculators: Calculator,
   "Lab Equipment": FlaskConical,
-  "Hostel Items": Bed,
+  "Other Items": Package,
 };
 
 export function ListingCard({ listing, onClick }: ListingCardProps) {

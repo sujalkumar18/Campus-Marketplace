@@ -4,6 +4,24 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
 import { insertListingSchema, insertUserSchema } from "@shared/schema";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+// Configure multer for file uploads
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage_multer = multer.diskStorage({
+  destination: uploadsDir,
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ storage: storage_multer });
 
 export async function registerRoutes(
   httpServer: Server,
@@ -146,6 +164,15 @@ export async function registerRoutes(
     }
   });
 
+  // Image Upload Endpoint
+  app.post("/api/upload", upload.single("file"), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
   // Seed Data
   await seedDatabase();
 
@@ -153,53 +180,5 @@ export async function registerRoutes(
 }
 
 async function seedDatabase() {
-  const existingUsers = await storage.getUserByUsername("student1");
-  if (!existingUsers) {
-    const user1 = await storage.createUser({
-      username: "student1",
-      password: "password123",
-      college: "Alliance University",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=student1"
-    });
-    
-    const user2 = await storage.createUser({
-      username: "student2",
-      password: "password123",
-      college: "Alliance University",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=student2"
-    });
-
-    await storage.createListing({
-      sellerId: user1.id,
-      title: "Engineering Mechanics Textbook",
-      description: "First year engineering mechanics book, good condition.",
-      price: 450,
-      category: "Books",
-      imageUrl: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c",
-      type: "sell",
-      status: "available"
-    });
-
-    await storage.createListing({
-      sellerId: user2.id,
-      title: "Scientific Calculator",
-      description: "Casio fx-991EX Classwiz, rarely used.",
-      price: 800,
-      category: "Calculators",
-      imageUrl: "https://images.unsplash.com/photo-1587145820266-a7951b306098",
-      type: "sell",
-      status: "available"
-    });
-    
-    await storage.createListing({
-      sellerId: user1.id,
-      title: "Lab Coat & Goggles",
-      description: "Chemistry lab coat size M + safety goggles.",
-      price: 300,
-      category: "Lab Equipment",
-      imageUrl: "https://images.unsplash.com/photo-1581093458891-773153cf8370",
-      type: "rent",
-      status: "available"
-    });
-  }
+  // Seed is disabled - users will create their own listings with real images
 }
