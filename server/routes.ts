@@ -28,41 +28,9 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // Auth Middleware (Simple MVP implementation)
-  // In a real app, use passport or proper session middleware
-  // Here we'll just trust the client sends a userId header for simplicity if avoiding full auth setup
-  // OR we implement a basic session based login.
-  // Given user asked for Firebase, and we are pivoting to local DB, let's do a simple session-like simulation or actual session.
-  // The template has express-session and passport installed. Let's use it?
-  // Fast mode: Custom simple auth is often faster than debugging passport configuration issues in 1 turn.
-  // We'll use a simple in-memory session or just return the user object on login and expect client to store it.
-  
-  // Auth Routes
-  app.post(api.auth.register.path, async (req, res) => {
-    try {
-      const input = api.auth.register.input.parse(req.body);
-      const existing = await storage.getUserByUsername(input.username);
-      if (existing) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-      const user = await storage.createUser(input);
-      res.status(201).json(user);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({ message: err.errors[0].message });
-      }
-      throw err;
-    }
-  });
-
-  app.post(api.auth.login.path, async (req, res) => {
-    const { username, password } = req.body;
-    const user = await storage.getUserByUsername(username);
-    if (!user || user.password !== password) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-    res.json(user);
-  });
+  // Auth Routes (Disabled - using default user for MVP)
+  // app.post(api.auth.register.path, ...);
+  // app.post(api.auth.login.path, ...);
 
   // Listings Routes
   app.get(api.listings.list.path, async (req, res) => {
