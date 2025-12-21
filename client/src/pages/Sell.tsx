@@ -3,7 +3,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { useCreateListing } from "@/hooks/use-listings";
 import { useLocation } from "wouter";
 import { Camera, Upload, Loader2, IndianRupee, X, FileText, Video } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, watch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertListingSchema } from "@shared/schema";
 import { z } from "zod";
@@ -32,6 +32,7 @@ export default function Sell() {
     register,
     handleSubmit,
     formState: { errors },
+    watch: watchForm,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,6 +42,8 @@ export default function Sell() {
       imageUrls: [],
     }
   });
+
+  const selectedCategory = watchForm("category");
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (imageUrls.length >= 5) {
@@ -255,35 +258,37 @@ export default function Sell() {
               {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
             </div>
 
-            {/* PDF Upload (Optional) */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-muted-foreground" />
-                <label className="text-sm font-medium text-foreground">Notes PDF (Optional)</label>
+            {/* PDF Upload (Optional - Only for Notes) */}
+            {selectedCategory === "Notes" && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <label className="text-sm font-medium text-foreground">Notes PDF (Optional)</label>
+                </div>
+                {pdfUrl ? (
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
+                    <span className="text-sm text-foreground truncate">PDF uploaded</span>
+                    <button
+                      type="button"
+                      onClick={() => setPdfUrl("")}
+                      className="text-destructive hover:text-destructive/80"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept=".pdf"
+                      onChange={handlePdfUpload}
+                      disabled={uploading}
+                      className="w-full px-4 py-3 rounded-xl bg-background border border-dashed border-border hover:border-primary/50 focus:outline-none cursor-pointer"
+                    />
+                  </div>
+                )}
               </div>
-              {pdfUrl ? (
-                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
-                  <span className="text-sm text-foreground truncate">PDF uploaded</span>
-                  <button
-                    type="button"
-                    onClick={() => setPdfUrl("")}
-                    className="text-destructive hover:text-destructive/80"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handlePdfUpload}
-                    disabled={uploading}
-                    className="w-full px-4 py-3 rounded-xl bg-background border border-dashed border-border hover:border-primary/50 focus:outline-none cursor-pointer"
-                  />
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Video Upload (Optional) */}
             <div className="space-y-2">

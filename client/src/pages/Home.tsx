@@ -78,21 +78,31 @@ export default function Home() {
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="text-sm text-muted-foreground">Finding great deals...</p>
           </div>
-        ) : listings?.length === 0 ? (
-          <div className="text-center py-20 bg-muted/30 rounded-3xl border border-dashed border-border">
-            <p className="text-lg font-semibold text-foreground">No items found</p>
-            <p className="text-sm text-muted-foreground mt-1">Try changing the category</p>
-          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {listings?.map((listing) => (
-              <ListingCard
-                key={listing.id}
-                listing={listing}
-                onClick={() => handleListingClick(listing.id)}
-              />
-            ))}
-          </div>
+          <>
+            {(() => {
+              const availableListings = listings?.filter(
+                (listing) => listing.status !== "sold" && listing.status !== "rented"
+              ) || [];
+              
+              return availableListings.length === 0 ? (
+                <div className="text-center py-20 bg-muted/30 rounded-3xl border border-dashed border-border">
+                  <p className="text-lg font-semibold text-foreground">No items found</p>
+                  <p className="text-sm text-muted-foreground mt-1">Try changing the category</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {availableListings.map((listing) => (
+                    <ListingCard
+                      key={listing.id}
+                      listing={listing}
+                      onClick={() => handleListingClick(listing.id)}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
+          </>
         )}
       </main>
 
