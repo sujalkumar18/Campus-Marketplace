@@ -17,6 +17,8 @@ const CATEGORY_ICONS: Record<string, any> = {
 
 export function ListingCard({ listing, onClick }: ListingCardProps) {
   const Icon = CATEGORY_ICONS[listing.category] || Tag;
+  const images = Array.isArray(listing.imageUrls) ? listing.imageUrls : [];
+  const firstImage = images.length > 0 ? images[0] : null;
 
   return (
     <div
@@ -24,9 +26,9 @@ export function ListingCard({ listing, onClick }: ListingCardProps) {
       className="group bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden hover:shadow-xl hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col h-full"
     >
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-        {listing.imageUrl ? (
+        {firstImage ? (
           <img
-            src={listing.imageUrl}
+            src={firstImage}
             alt={listing.title}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />

@@ -17,10 +17,13 @@ export const listings = pgTable("listings", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   price: integer("price").notNull(),
-  category: text("category").notNull(), // Books, Notes, Calculators, Lab Equipment, Hostel Items
-  imageUrl: text("image_url").notNull(),
+  category: text("category").notNull(),
+  imageUrl: text("image_url"), // Kept for backward compatibility
+  imageUrls: jsonb("image_urls"), // Array of all images (1-5)
+  pdfUrl: text("pdf_url"), // Optional PDF for notes
+  videoUrl: text("video_url"), // Optional video
   type: text("type").notNull(), // 'sell' | 'rent'
-  status: text("status").notNull().default("available"), // 'available', 'sold', 'rented'
+  status: text("status").notNull().default("available"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

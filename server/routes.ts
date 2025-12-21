@@ -132,7 +132,7 @@ export async function registerRoutes(
     }
   });
 
-  // Image Upload Endpoint
+  // File Upload Endpoint (Images, PDFs, Videos)
   app.post("/api/upload", upload.single("file"), (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
