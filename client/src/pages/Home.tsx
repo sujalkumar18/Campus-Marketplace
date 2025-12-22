@@ -22,13 +22,7 @@ export default function Home() {
   const { mutate: createChat } = useCreateChat();
 
   const handleListingClick = (listingId: number) => {
-    // In a real app, this would go to a details page.
-    // For MVP, checking if we want to chat.
-    createChat({ listingId }, {
-      onSuccess: (chat) => {
-        setLocation(`/chats/${chat.id}`);
-      }
-    });
+    setLocation(`/listing/${listingId}`);
   };
 
   return (

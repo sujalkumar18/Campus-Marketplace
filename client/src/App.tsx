@@ -11,6 +11,7 @@ import Sell from "@/pages/Sell";
 import Chats from "@/pages/Chats";
 import ChatDetail from "@/pages/ChatDetail";
 import Profile from "@/pages/Profile";
+import ListingDetail from "@/pages/ListingDetail";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/home" component={Home} />
       <Route path="/sell" component={Sell} />
+      <Route path="/listing/:id" component={ListingDetail} />
       <Route path="/chats" component={Chats} />
       <Route path="/chats/:id" component={ChatDetail} />
       <Route path="/profile" component={Profile} />

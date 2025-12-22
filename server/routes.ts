@@ -141,6 +141,45 @@ export async function registerRoutes(
     res.json({ url });
   });
 
+  // Purchase/Rent Endpoint
+  app.post("/api/purchase", async (req, res) => {
+    try {
+      const { listingId, type, quantity } = req.body;
+      const userId = 1; // Default user for MVP
+      
+      if (!listingId || !type) {
+        return res.status(400).json({ message: "listingId and type required" });
+      }
+
+      const listing = await storage.getListing(Number(listingId));
+      if (!listing) {
+        return res.status(404).json({ message: "Listing not found" });
+      }
+
+      // Create order record (simple tracking)
+      // In a real app, this would handle payment, inventory, etc.
+      const orderData = {
+        listingId: Number(listingId),
+        buyerId: userId,
+        sellerId: listing.sellerId,
+        type,
+        quantity: quantity || 1,
+        totalPrice: listing.price * (quantity || 1),
+        status: "pending",
+        createdAt: new Date().toISOString()
+      };
+
+      // Return success - frontend will handle the navigation
+      res.status(201).json({
+        message: "Order created successfully",
+        order: orderData
+      });
+    } catch (err) {
+      console.error("Error creating order:", err);
+      res.status(500).json({ message: "Error creating order" });
+    }
+  });
+
   // Seed Data
   await seedDatabase();
 
