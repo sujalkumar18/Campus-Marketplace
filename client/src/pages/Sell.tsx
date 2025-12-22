@@ -126,7 +126,8 @@ export default function Sell() {
     
     createListing({
       ...data,
-      imageUrls: imageUrls.length > 0 ? imageUrls : ["/uploads/no-image.png"],
+      imageUrl: imageUrls.length > 0 ? imageUrls[0] : undefined,
+      imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       pdfUrl: pdfUrl || undefined,
       pdfSlidesAllowed: pdfSlidesAllowed ? parseInt(pdfSlidesAllowed) : undefined,
       videoUrl: videoUrl || undefined,

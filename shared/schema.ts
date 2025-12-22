@@ -18,7 +18,7 @@ export const listings = pgTable("listings", {
   description: text("description").notNull(),
   price: integer("price").notNull(),
   category: text("category").notNull(),
-  imageUrl: text("image_url").default(""), // Kept for backward compatibility
+  imageUrl: text("image_url"), // Kept for backward compatibility, nullable for PDF-only notes
   imageUrls: jsonb("image_urls"), // Array of all images (1-5)
   pdfUrl: text("pdf_url"), // Optional PDF for notes
   pdfSlidesAllowed: integer("pdf_slides_allowed"), // How many slides allowed for viewing
