@@ -12,6 +12,7 @@ const formSchema = insertListingSchema.extend({
   price: z.coerce.number().min(1, "Price must be at least 1"),
   imageUrls: z.array(z.string()).default([]),
   pdfUrl: z.string().optional(),
+  pdfSlidesAllowed: z.coerce.number().optional(),
   videoUrl: z.string().optional(),
 });
 
@@ -25,6 +26,7 @@ export default function Sell() {
   const [listingType, setListingType] = useState<"sell" | "rent">("sell");
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfSlidesAllowed, setPdfSlidesAllowed] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
@@ -110,14 +112,23 @@ export default function Sell() {
   };
 
   const onSubmit = (data: FormData) => {
-    if (imageUrls.length === 0) {
+    const isNotesWithPdf = selectedCategory === "Notes" && pdfUrl;
+    
+    if (imageUrls.length === 0 && !isNotesWithPdf) {
       alert("Please upload at least 1 image");
       return;
     }
+    
+    if (isNotesWithPdf && !pdfSlidesAllowed) {
+      alert("Please specify how many slides buyers can read");
+      return;
+    }
+    
     createListing({
       ...data,
-      imageUrls,
+      imageUrls: imageUrls.length > 0 ? imageUrls : ["/uploads/no-image.png"],
       pdfUrl: pdfUrl || undefined,
+      pdfSlidesAllowed: pdfSlidesAllowed ? parseInt(pdfSlidesAllowed) : undefined,
       videoUrl: videoUrl || undefined,
       type: listingType
     }, {
@@ -140,7 +151,9 @@ export default function Sell() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-sm font-medium text-foreground ml-1">Photos ({imageUrls.length}/5)</label>
-              <span className="text-xs text-muted-foreground">Minimum 1, Maximum 5</span>
+              <span className="text-xs text-muted-foreground">
+                {selectedCategory === "Notes" && pdfUrl ? "Optional" : "Minimum 1, Maximum 5"}
+              </span>
             </div>
             
             {/* Image Grid */}
@@ -260,31 +273,52 @@ export default function Sell() {
 
             {/* PDF Upload (Optional - Only for Notes) */}
             {selectedCategory === "Notes" && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                  <label className="text-sm font-medium text-foreground">Notes PDF (Optional)</label>
-                </div>
-                {pdfUrl ? (
-                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
-                    <span className="text-sm text-foreground truncate">PDF uploaded</span>
-                    <button
-                      type="button"
-                      onClick={() => setPdfUrl("")}
-                      className="text-destructive hover:text-destructive/80"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    <label className="text-sm font-medium text-foreground">Notes PDF (Optional)</label>
                   </div>
-                ) : (
-                  <div className="relative">
+                  {pdfUrl ? (
+                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border">
+                      <span className="text-sm text-foreground truncate">PDF uploaded</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPdfUrl("");
+                          setPdfSlidesAllowed("");
+                        }}
+                        className="text-destructive hover:text-destructive/80"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={handlePdfUpload}
+                        disabled={uploading}
+                        className="w-full px-4 py-3 rounded-xl bg-background border border-dashed border-border hover:border-primary/50 focus:outline-none cursor-pointer"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Slides Allowed (Only when PDF is uploaded) */}
+                {pdfUrl && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground ml-1">How many slides can buyers read?</label>
                     <input
-                      type="file"
-                      accept=".pdf"
-                      onChange={handlePdfUpload}
-                      disabled={uploading}
-                      className="w-full px-4 py-3 rounded-xl bg-background border border-dashed border-border hover:border-primary/50 focus:outline-none cursor-pointer"
+                      type="number"
+                      value={pdfSlidesAllowed}
+                      onChange={(e) => setPdfSlidesAllowed(e.target.value)}
+                      placeholder="e.g. 5, 10, all"
+                      min="1"
+                      className="w-full px-4 py-3 rounded-xl bg-background border border-border focus:ring-2 focus:ring-primary/10 focus:border-primary outline-none transition-all"
                     />
+                    <p className="text-xs text-muted-foreground">Buyers will be able to preview this many pages/slides of your PDF</p>
                   </div>
                 )}
               </div>

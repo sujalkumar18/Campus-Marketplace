@@ -18,9 +18,10 @@ export const listings = pgTable("listings", {
   description: text("description").notNull(),
   price: integer("price").notNull(),
   category: text("category").notNull(),
-  imageUrl: text("image_url"), // Kept for backward compatibility
+  imageUrl: text("image_url").default(""), // Kept for backward compatibility
   imageUrls: jsonb("image_urls"), // Array of all images (1-5)
   pdfUrl: text("pdf_url"), // Optional PDF for notes
+  pdfSlidesAllowed: integer("pdf_slides_allowed"), // How many slides allowed for viewing
   videoUrl: text("video_url"), // Optional video
   type: text("type").notNull(), // 'sell' | 'rent'
   status: text("status").notNull().default("available"),
