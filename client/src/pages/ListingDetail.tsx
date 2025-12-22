@@ -12,19 +12,20 @@ export default function ListingDetail() {
   const listingId = Number(params?.id);
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [showInterestModal, setShowInterestModal] = useState(false);
+  const [interestType, setInterestType] = useState<"buy" | "rent" | null>(null);
 
   const { data: listing, isLoading } = useQuery<Listing>({
     queryKey: [`/api/listings/${listingId}`],
     enabled: !!listingId,
   });
 
-  const buyMutation = useMutation({
-    mutationFn: (data: { listingId: number; type: "buy" | "rent"; quantity?: number }) =>
-      apiRequest("POST", "/api/purchase", data),
+  const sendMessageMutation = useMutation({
+    mutationFn: (data: { chatId: number; message: string }) =>
+      apiRequest("POST", `/api/chats/${data.chatId}/messages`, { text: data.message }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/listings/${listingId}`] });
-      alert("Order placed successfully! Start a chat with the seller to arrange delivery.");
-      setLocation("/chats");
+      setShowInterestModal(false);
+      setInterestType(null);
     },
   });
 
@@ -139,17 +140,22 @@ export default function ListingDetail() {
         </div>
 
         {/* Buy/Rent Actions */}
-        <div className="space-y-3 mt-8">
+        <div className="space-y-4 mt-8">
           {listing.type === "sell" ? (
-            <button
-              onClick={() => buyMutation.mutate({ listingId: listing.id, type: "buy" })}
-              disabled={buyMutation.isPending}
-              className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
-              data-testid="button-buy"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              {buyMutation.isPending ? "Processing..." : "Buy Now"}
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setInterestType("buy");
+                  setShowInterestModal(true);
+                }}
+                className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
+                data-testid="button-buy"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                Buy Now
+              </button>
+              <p className="text-xs text-muted-foreground text-center">Connect with seller to buy offline</p>
+            </>
           ) : (
             <>
               <div className="flex gap-2 items-center bg-muted/50 px-3 py-2 rounded-lg border border-border">
@@ -173,16 +179,17 @@ export default function ListingDetail() {
                 </div>
               </div>
               <button
-                onClick={() =>
-                  buyMutation.mutate({ listingId: listing.id, type: "rent", quantity })
-                }
-                disabled={buyMutation.isPending}
-                className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
+                onClick={() => {
+                  setInterestType("rent");
+                  setShowInterestModal(true);
+                }}
+                className="w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2"
                 data-testid="button-rent"
               >
                 <Calendar className="w-5 h-5" />
-                {buyMutation.isPending ? "Processing..." : "Rent Now"}
+                Rent Now
               </button>
+              <p className="text-xs text-muted-foreground text-center">Connect with seller to rent offline</p>
             </>
           )}
 
@@ -229,6 +236,45 @@ export default function ListingDetail() {
                   Download PDF
                 </a>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interest Confirmation Modal */}
+      {showInterestModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl max-w-md w-full flex flex-col">
+            <div className="p-4 border-b border-border">
+              <h2 className="font-bold text-foreground text-lg">Confirm Interest</h2>
+            </div>
+            <div className="p-6 space-y-4 text-center">
+              <p className="text-foreground">
+                You are showing interest in this item.
+              </p>
+              <p className="text-muted-foreground">
+                Contact the seller to complete the deal in person.
+              </p>
+            </div>
+            <div className="p-4 border-t border-border space-y-3 flex flex-col gap-2">
+              <button
+                onClick={() => setLocation(`/chats/${listing.id}`)}
+                disabled={sendMessageMutation.isPending}
+                className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-all"
+                data-testid="button-continue-chat"
+              >
+                {sendMessageMutation.isPending ? "Connecting..." : "Continue to Chat"}
+              </button>
+              <button
+                onClick={() => {
+                  setShowInterestModal(false);
+                  setInterestType(null);
+                }}
+                className="w-full py-3 px-4 bg-muted text-foreground font-bold rounded-xl hover:bg-muted/80 transition-all"
+                data-testid="button-cancel-interest"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
