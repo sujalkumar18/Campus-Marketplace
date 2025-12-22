@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "CampusRent",
+    "slug": "campusrent",
+    "version": "1.0.0",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTabletMode": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.campusrent.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow CampusRent to access your photos.",
+          "cameraPermission": "Allow CampusRent to access your camera."
+        }
+      ]
+    ]
+  }
+}
