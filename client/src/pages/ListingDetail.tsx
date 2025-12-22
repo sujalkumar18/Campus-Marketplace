@@ -139,7 +139,7 @@ export default function ListingDetail() {
         </div>
 
         {/* Buy/Rent Actions */}
-        <div className="space-y-3 fixed bottom-24 left-4 right-4 max-w-md mx-auto">
+        <div className="space-y-3 mt-8">
           {listing.type === "sell" ? (
             <button
               onClick={() => buyMutation.mutate({ listingId: listing.id, type: "buy" })}
