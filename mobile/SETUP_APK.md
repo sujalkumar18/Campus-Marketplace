@@ -4,10 +4,15 @@
 
 Edit `mobile/lib/queryClient.ts` and replace:
 ```typescript
-const BASE_URL = 'http://YOUR_REPLIT_URL:5000';
+const BASE_URL = 'https://YOUR_RENDER_URL.onrender.com';
 ```
 
-With your actual Replit backend URL. You can find this URL when you open the preview in Replit.
+With your actual Render backend URL (example: `https://campusrent-api.onrender.com`).
+
+### Getting Your Render URL:
+1. Deploy your backend to Render (see `RENDER_DEPLOYMENT.md`)
+2. After deployment, Render will give you a URL like: `https://your-app-name.onrender.com`
+3. Use that URL in the mobile app
 
 ## Step 2: Install Dependencies
 

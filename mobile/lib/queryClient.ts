@@ -12,7 +12,9 @@ const queryClient = new QueryClient({
 export { queryClient };
 
 // API helper function - update BASE_URL based on your backend
-const BASE_URL = 'http://YOUR_REPLIT_URL:5000';
+// For local development: http://localhost:5000
+// For Render deployment: https://your-app-name.onrender.com
+const BASE_URL = 'https://YOUR_RENDER_URL.onrender.com';
 
 export async function apiRequest(
   path: string,
