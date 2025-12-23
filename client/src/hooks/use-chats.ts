@@ -9,7 +9,8 @@ export function useChats() {
   return useQuery({
     queryKey: [api.chats.list.path],
     queryFn: async () => {
-      const res = await fetch(api.chats.list.path, { credentials: "include" });
+      const url = `${api.chats.list.path}?userId=1`;
+      const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch chats");
       return api.chats.list.responses[200].parse(await res.json());
     },
@@ -57,7 +58,7 @@ export function useSendMessage() {
       const res = await fetch(url, {
         method: api.chats.sendMessage.method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, senderId: 1 }),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to send message");
