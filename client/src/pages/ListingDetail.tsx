@@ -14,6 +14,8 @@ export default function ListingDetail() {
   const [quantity, setQuantity] = useState(1);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [interestType, setInterestType] = useState<"buy" | "rent" | null>(null);
+  const [returnDate, setReturnDate] = useState("");
+  const [showReturnConfirm, setShowReturnConfirm] = useState(false);
 
   const { data: listing, isLoading } = useQuery<Listing>({
     queryKey: [`/api/listings/${listingId}`],
@@ -45,8 +47,19 @@ export default function ListingDetail() {
     );
   }
 
+  const handleRentalReturn = async () => {
+    if (!returnDate) {
+      alert("Please select a return date");
+      return;
+    }
+    // This will be called when initiating rental
+    setShowReturnConfirm(false);
+    alert(`Return date set to ${new Date(returnDate).toLocaleDateString()}. Seller will confirm.`);
+  };
+
   const images = Array.isArray(listing.imageUrls) ? listing.imageUrls : [];
   const currentImageIndex = 0;
+  const isRental = listing.type === "rent";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -99,6 +112,21 @@ export default function ListingDetail() {
               {listing.category}
             </span>
           </div>
+
+          {listing.type === "rent" && (
+            <div>
+              <p className="text-sm text-muted-foreground mb-3 font-semibold">Rental Return Date</p>
+              <input
+                type="date"
+                value={returnDate}
+                onChange={(e) => setReturnDate(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-white focus:ring-2 focus:ring-primary/20"
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Both you and seller must confirm return. Late returns: ₹500 penalty
+              </p>
+            </div>
+          )}
 
           <div>
             <p className="text-sm text-muted-foreground mb-2">Type</p>

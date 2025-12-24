@@ -69,29 +69,35 @@ export default function ChatDetail() {
             <div className="flex justify-center py-10">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
-          ) : messages?.map((msg) => {
-            const isMe = msg.senderId === CURRENT_USER_ID;
-            return (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex w-full",
-                  isMe ? "justify-end" : "justify-start"
-                )}
-              >
+          ) : !messages || messages.length === 0 ? (
+            <div className="flex justify-center py-10 text-muted-foreground">
+              <p className="text-sm">No messages yet. Start the conversation!</p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isMe = msg.senderId === CURRENT_USER_ID;
+              return (
                 <div
+                  key={msg.id}
                   className={cn(
-                    "max-w-[75%] px-4 py-2.5 rounded-2xl text-sm shadow-sm",
-                    isMe
-                      ? "bg-primary text-primary-foreground rounded-tr-none"
-                      : "bg-white border border-border text-foreground rounded-tl-none"
+                    "flex w-full",
+                    isMe ? "justify-end" : "justify-start"
                   )}
                 >
-                  {msg.content}
+                  <div
+                    className={cn(
+                      "max-w-[75%] px-4 py-2.5 rounded-2xl text-sm shadow-sm",
+                      isMe
+                        ? "bg-primary text-primary-foreground rounded-tr-none"
+                        : "bg-white border border-border text-foreground rounded-tl-none"
+                    )}
+                  >
+                    {msg.content}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
           {/* Spacer for bottom bar */}
           <div className="h-4" />
         </div>

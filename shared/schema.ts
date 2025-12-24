@@ -44,6 +44,19 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const rentalReturns = pgTable("rental_returns", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull(),
+  listingId: integer("listing_id").notNull(),
+  returnDate: timestamp("return_date").notNull(),
+  buyerConfirmed: boolean("buyer_confirmed").default(false),
+  sellerConfirmed: boolean("seller_confirmed").default(false),
+  isLate: boolean("is_late").default(false),
+  penalty: integer("penalty").default(0),
+  status: text("status").default("pending"), // pending | completed | late
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const listingsRelations = relations(listings, ({ one }) => ({
   seller: one(users, {
@@ -75,11 +88,19 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }));
 
+export const rentalReturnsRelations = relations(rentalReturns, ({ one }) => ({
+  chat: one(chats, {
+    fields: [rentalReturns.chatId],
+    references: [chats.id],
+  }),
+}));
+
 // Schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true });
 export const insertListingSchema = createInsertSchema(listings).omit({ id: true, createdAt: true });
 export const insertChatSchema = createInsertSchema(chats).omit({ id: true, createdAt: true });
 export const insertMessageSchema = createInsertSchema(messages).omit({ id: true, createdAt: true });
+export const insertRentalReturnSchema = createInsertSchema(rentalReturns).omit({ id: true, createdAt: true });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -88,3 +109,5 @@ export type InsertListing = z.infer<typeof insertListingSchema>;
 export type Chat = typeof chats.$inferSelect;
 export type Message = typeof messages.$inferSelect;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type RentalReturn = typeof rentalReturns.$inferSelect;
+export type InsertRentalReturn = z.infer<typeof insertRentalReturnSchema>;

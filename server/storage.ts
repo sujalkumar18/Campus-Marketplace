@@ -1,4 +1,4 @@
-import { users, listings, chats, messages, type User, type InsertUser, type Listing, type InsertListing, type Chat, type Message, type InsertMessage } from "@shared/schema";
+import { users, listings, chats, messages, rentalReturns, type User, type InsertUser, type Listing, type InsertListing, type Chat, type Message, type InsertMessage, type RentalReturn, type InsertRentalReturn } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, or } from "drizzle-orm";
 
@@ -22,6 +22,11 @@ export interface IStorage {
   // Messages
   getMessages(chatId: number): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
+
+  // Rental Returns
+  getRentalReturn(chatId: number): Promise<RentalReturn | undefined>;
+  createRentalReturn(rental: InsertRentalReturn): Promise<RentalReturn>;
+  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller"): Promise<RentalReturn>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -114,6 +119,49 @@ export class DatabaseStorage implements IStorage {
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     const [message] = await db.insert(messages).values(insertMessage).returning();
     return message;
+  }
+
+  async getRentalReturn(chatId: number): Promise<RentalReturn | undefined> {
+    const [rental] = await db.select().from(rentalReturns)
+      .where(eq(rentalReturns.chatId, chatId))
+      .orderBy(desc(rentalReturns.createdAt));
+    return rental;
+  }
+
+  async createRentalReturn(insertRental: InsertRentalReturn): Promise<RentalReturn> {
+    const [rental] = await db.insert(rentalReturns).values(insertRental).returning();
+    return rental;
+  }
+
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller"): Promise<RentalReturn> {
+    const [rental] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
+    if (!rental) throw new Error("Rental return not found");
+
+    const now = new Date();
+    const returnDate = new Date(rental.returnDate);
+    const isLate = now > returnDate;
+    const penalty = isLate ? 500 : 0; // ₹500 penalty for late return
+
+    let buyerConfirmed = rental.buyerConfirmed;
+    let sellerConfirmed = rental.sellerConfirmed;
+
+    if (confirmedBy === "buyer") buyerConfirmed = true;
+    if (confirmedBy === "seller") sellerConfirmed = true;
+
+    const status = buyerConfirmed && sellerConfirmed ? "completed" : isLate ? "late" : "pending";
+
+    const [updated] = await db.update(rentalReturns)
+      .set({
+        buyerConfirmed,
+        sellerConfirmed,
+        isLate,
+        penalty,
+        status,
+      })
+      .where(eq(rentalReturns.id, id))
+      .returning();
+
+    return updated;
   }
 }
 
