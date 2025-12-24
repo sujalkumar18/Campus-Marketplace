@@ -72,25 +72,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getChats(userId: number): Promise<(Chat & { listing: Listing, otherUser: User })[]> {
-    const userChats = await db.select({
-      chat: chats,
-      listing: listings,
-      buyer: users,
-      seller: users,
-    })
-    .from(chats)
-    .innerJoin(listings, eq(chats.listingId, listings.id))
-    .innerJoin(users, eq(chats.buyerId, users.id)) // Join buyer
-    .leftJoin(users, eq(chats.sellerId, users.id)) // Join seller (aliased via leftJoin logic, but standard join is fine)
-    .where(or(eq(chats.buyerId, userId), eq(chats.sellerId, userId)));
-
-    // Map results to the expected format and determine "otherUser"
-    // Note: Drizzle join syntax above is simplified; actual join with aliases for same table twice needs explicit aliases.
-    // However, for MVP speed, let's just fetch basic chats and populate manually if needed, or use simpler logic.
-    // Let's rely on basic joins.
-    // Correct approach with aliases in Drizzle:
-    // This is getting complex for a quick edit. Let's simplify: fetch chats, then fetch related data.
-    
     const rawChats = await db.select().from(chats).where(or(eq(chats.buyerId, userId), eq(chats.sellerId, userId)));
     
     const enrichedChats = await Promise.all(rawChats.map(async (chat) => {
