@@ -27,32 +27,35 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-4 safe-top">
+      {/* Hero Header */}
+      <header className="sticky top-0 z-40 bg-gradient-to-b from-background via-background/95 to-background/80 backdrop-blur-lg border-b border-border/40 px-4 py-5 safe-top shadow-sm-elevation">
         <div className="max-w-md mx-auto space-y-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-display font-bold text-foreground">
-              CampusRent
-            </h1>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="font-bold text-primary text-xs">AU</span>
+            <div>
+              <h1 className="text-2xl font-display font-black text-foreground leading-tight">
+                CampusRent
+              </h1>
+              <p className="text-xs text-muted-foreground font-medium">Campus Marketplace</p>
+            </div>
+            <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center shadow-md-elevation">
+              <span className="font-black text-white text-sm">AU</span>
             </div>
           </div>
           
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5 group-focus-within:text-primary transition-colors" />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search books, notes, calculators..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-muted/50 border-none focus:ring-2 focus:ring-primary/20 text-sm transition-all"
+              placeholder="Find books, notes, gear..."
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-border/60 focus:border-primary/40 focus:ring-2 focus:ring-primary/15 text-sm font-medium transition-all shadow-sm-elevation"
             />
           </div>
         </div>
       </header>
 
       {/* Categories */}
-      <div className="pt-4 pb-2 overflow-x-auto no-scrollbar px-4">
+      <div className="pt-5 pb-3 overflow-x-auto no-scrollbar px-4 bg-gradient-to-b from-background/50 to-transparent">
         <div className="flex gap-2 w-max">
           {CATEGORIES.map((cat) => (
             <CategoryPill
@@ -66,11 +69,14 @@ export default function Home() {
       </div>
 
       {/* Feed */}
-      <main className="px-4 py-4 max-w-md mx-auto">
+      <main className="px-4 py-6 max-w-md mx-auto">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">Finding great deals...</p>
+          <div className="flex flex-col items-center justify-center py-32 gap-4">
+            <div className="relative w-12 h-12">
+              <Loader2 className="w-12 h-12 text-primary animate-spin absolute" />
+              <div className="w-12 h-12 gradient-primary rounded-full blur-xl opacity-30 absolute"></div>
+            </div>
+            <p className="text-sm font-medium text-muted-foreground">Scouting for treasures...</p>
           </div>
         ) : (
           <>
@@ -80,12 +86,15 @@ export default function Home() {
               ) || [];
               
               return availableListings.length === 0 ? (
-                <div className="text-center py-20 bg-muted/30 rounded-3xl border border-dashed border-border">
-                  <p className="text-lg font-semibold text-foreground">No items found</p>
-                  <p className="text-sm text-muted-foreground mt-1">Try changing the category</p>
+                <div className="text-center py-20 bg-gradient-to-b from-muted/20 to-muted/5 rounded-3xl border-2 border-dashed border-border">
+                  <div className="w-16 h-16 rounded-full gradient-primary/10 mx-auto mb-4 flex items-center justify-center">
+                    <Search className="w-8 h-8 text-muted-foreground/50" />
+                  </div>
+                  <p className="text-lg font-semibold text-foreground">No items yet</p>
+                  <p className="text-sm text-muted-foreground mt-2">Try a different category or start selling!</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {availableListings.map((listing) => (
                     <ListingCard
                       key={listing.id}

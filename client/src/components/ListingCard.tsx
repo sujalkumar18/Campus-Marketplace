@@ -23,49 +23,51 @@ export function ListingCard({ listing, onClick }: ListingCardProps) {
   return (
     <div
       onClick={onClick}
-      className="group bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden hover:shadow-xl hover:border-primary/20 transition-all duration-300 cursor-pointer flex flex-col h-full"
+      className="group bg-white rounded-2xl border border-border/40 shadow-sm-elevation overflow-hidden hover:shadow-lg-elevation hover:border-primary/30 transition-all duration-300 cursor-pointer flex flex-col h-full active:scale-95"
     >
       <div className="relative aspect-[4/3] bg-muted overflow-hidden">
         {firstImage ? (
           <img
             src={firstImage}
             alt={listing.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-secondary">
-            <Icon className="w-12 h-12 text-muted-foreground/30" />
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10">
+            <Icon className="w-16 h-16 text-muted-foreground/20" />
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        
         <div className="absolute top-3 right-3 flex gap-2">
            <span
             className={cn(
-              "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm backdrop-blur-md",
+              "px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-md-elevation backdrop-blur-sm",
               listing.type === "sell"
-                ? "bg-emerald-500/90 text-white"
-                : "bg-blue-500/90 text-white"
+                ? "bg-emerald-500/95 text-white"
+                : "bg-secondary/95 text-white"
             )}
           >
-            {listing.type}
+            {listing.type === "sell" ? "For Sale" : "For Rent"}
           </span>
           {listing.status !== 'available' && (
-             <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide bg-gray-800/90 text-white shadow-sm backdrop-blur-md">
+             <span className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-gray-700/95 text-white shadow-md-elevation backdrop-blur-sm">
                {listing.status}
              </span>
           )}
         </div>
       </div>
 
-      <div className="p-4 flex flex-col flex-grow">
+      <div className="p-4 flex flex-col flex-grow bg-gradient-card">
         <h3 className="font-display font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
           {listing.title}
         </h3>
-        <p className="text-sm text-muted-foreground mt-1 line-clamp-2 flex-grow">
+        <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2 flex-grow font-medium">
           {listing.description}
         </p>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="text-xl font-bold text-primary">₹{listing.price}</span>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md">
+        <div className="mt-4 flex items-center justify-between pt-2 border-t border-border/30">
+          <span className="text-2xl font-black gradient-primary bg-clip-text text-transparent">₹{listing.price}</span>
+          <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1.5 rounded-lg font-semibold">
             {listing.category}
           </span>
         </div>
