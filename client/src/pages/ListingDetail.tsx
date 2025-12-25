@@ -28,12 +28,19 @@ export default function ListingDetail() {
         listingId: Number(listingId),
         buyerId: 1, // Current user
       });
-      return res as { id: number };
+      const data = await res.json();
+      console.log("Chat created:", data);
+      return data as { id: number };
     },
     onSuccess: (data) => {
+      console.log("Chat creation successful, navigating to:", data.id);
       // Invalidate chats list and navigate to the new chat
       queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
       setLocation(`/chats/${data.id}`);
+    },
+    onError: (error) => {
+      console.error("Chat creation failed:", error);
+      alert("Failed to create chat: " + error.message);
     },
   });
 
