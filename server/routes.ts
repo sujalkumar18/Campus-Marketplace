@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
@@ -27,6 +27,9 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // Serve uploaded files (images, videos, PDFs)
+  app.use(express.static(uploadsDir));
 
   // Auth Routes (Disabled - using default user for MVP)
   // app.post(api.auth.register.path, ...);
