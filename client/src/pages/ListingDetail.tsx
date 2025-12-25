@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle } from "lucide-react";
+import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Listing } from "@shared/schema";
 
@@ -22,12 +22,28 @@ export default function ListingDetail() {
     enabled: !!listingId,
   });
 
+  const createChatMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/chats", {
+        listingId: Number(listingId),
+        buyerId: 1, // Current user
+      });
+      return res as { id: number };
+    },
+    onSuccess: (data) => {
+      // Invalidate chats list and navigate to the new chat
+      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+      setLocation(`/chats/${data.id}`);
+    },
+  });
+
   const sendMessageMutation = useMutation({
     mutationFn: (data: { chatId: number; message: string }) =>
       apiRequest("POST", `/api/chats/${data.chatId}/messages`, { text: data.message }),
     onSuccess: () => {
       setShowInterestModal(false);
       setInterestType(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
     },
   });
 
@@ -222,11 +238,19 @@ export default function ListingDetail() {
           )}
 
           <button
-            onClick={() => setLocation(`/chats/${listing.id}`)}
-            className="w-full py-3 px-4 bg-muted text-foreground font-bold rounded-xl hover:bg-muted/80 transition-all"
+            onClick={() => createChatMutation.mutate()}
+            disabled={createChatMutation.isPending}
+            className="w-full py-3 px-4 bg-muted text-foreground font-bold rounded-xl hover:bg-muted/80 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
             data-testid="button-chat-seller"
           >
-            Chat with Seller
+            {createChatMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              "Chat with Seller"
+            )}
           </button>
         </div>
       </main>
@@ -286,12 +310,19 @@ export default function ListingDetail() {
             </div>
             <div className="p-4 border-t border-border space-y-3 flex flex-col gap-2">
               <button
-                onClick={() => setLocation(`/chats/${listing.id}`)}
-                disabled={sendMessageMutation.isPending}
-                className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-all"
+                onClick={() => createChatMutation.mutate()}
+                disabled={createChatMutation.isPending}
+                className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
                 data-testid="button-continue-chat"
               >
-                {sendMessageMutation.isPending ? "Connecting..." : "Continue to Chat"}
+                {createChatMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  "Continue to Chat"
+                )}
               </button>
               <button
                 onClick={() => {
