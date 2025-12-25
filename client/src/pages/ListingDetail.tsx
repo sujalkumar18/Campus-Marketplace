@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
 import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2 } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useCreateChat } from "@/hooks/use-chats";
 import type { Listing } from "@shared/schema";
 
 export default function ListingDetail() {
@@ -22,37 +22,21 @@ export default function ListingDetail() {
     enabled: !!listingId,
   });
 
-  const createChatMutation = useMutation({
-    mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/chats", {
+  const createChatMutation = useCreateChat();
+  
+  const handleCreateChat = async () => {
+    try {
+      const chat = await createChatMutation.mutateAsync({
         listingId: Number(listingId),
-        buyerId: 1, // Current user
       });
-      const data = await res.json();
-      console.log("Chat created:", data);
-      return data as { id: number };
-    },
-    onSuccess: (data) => {
-      console.log("Chat creation successful, navigating to:", data.id);
-      // Invalidate chats list and navigate to the new chat
-      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
-      setLocation(`/chats/${data.id}`);
-    },
-    onError: (error) => {
-      console.error("Chat creation failed:", error);
-      alert("Failed to create chat: " + error.message);
-    },
-  });
-
-  const sendMessageMutation = useMutation({
-    mutationFn: (data: { chatId: number; message: string }) =>
-      apiRequest("POST", `/api/chats/${data.chatId}/messages`, { text: data.message }),
-    onSuccess: () => {
       setShowInterestModal(false);
-      setInterestType(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
-    },
-  });
+      setLocation(`/chats/${chat.id}`);
+    } catch (error) {
+      console.error("Failed to create chat:", error);
+      alert("Failed to create chat. Please try again.");
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -245,7 +229,7 @@ export default function ListingDetail() {
           )}
 
           <button
-            onClick={() => createChatMutation.mutate()}
+            onClick={handleCreateChat}
             disabled={createChatMutation.isPending}
             className="w-full py-3 px-4 bg-muted text-foreground font-bold rounded-xl hover:bg-muted/80 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
             data-testid="button-chat-seller"
@@ -286,7 +270,7 @@ export default function ListingDetail() {
                   PDF content would be displayed here in a production app
                 </p>
                 <a
-                  href={listing.pdfUrl}
+                  href={listing.pdfUrl || ""}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
@@ -317,7 +301,7 @@ export default function ListingDetail() {
             </div>
             <div className="p-4 border-t border-border space-y-3 flex flex-col gap-2">
               <button
-                onClick={() => createChatMutation.mutate()}
+                onClick={handleCreateChat}
                 disabled={createChatMutation.isPending}
                 className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
                 data-testid="button-continue-chat"
