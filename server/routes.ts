@@ -80,11 +80,12 @@ export async function registerRoutes(
     try {
       const { listingId, buyerId } = req.body;
       
-      if (!listingId || !buyerId) {
-        return res.status(400).json({ message: "listingId and buyerId required" });
+      if (!listingId) {
+        return res.status(400).json({ message: "listingId required" });
       }
       
-      const buyerIdNum = Number(buyerId);
+      // Use provided buyerId or default to 1 for MVP
+      const buyerIdNum = buyerId ? Number(buyerId) : 1;
       if (isNaN(buyerIdNum)) {
         return res.status(400).json({ message: "buyerId must be a valid number" });
       }
