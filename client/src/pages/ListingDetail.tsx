@@ -266,28 +266,26 @@ export default function ListingDetail() {
                   Preview Limit: {listing.pdfSlidesAllowed} slides
                 </p>
                 <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
-                  Seller allows you to read the first {listing.pdfSlidesAllowed} slides of this PDF.
+                  Seller allows you to read the first {listing.pdfSlidesAllowed} slides of this PDF. Full PDF access is restricted.
                 </p>
               </div>
-              <div className="bg-muted rounded-lg p-8 text-center">
-                <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">
-                  Preview of first {listing.pdfSlidesAllowed} slides
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-3">
+                  Want to see the full PDF?
                 </p>
-                <div className="space-y-2">
-                  <a
-                    href={listing.pdfUrl || ""}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-                    data-testid="link-download-pdf"
-                  >
-                    Download Full PDF
-                  </a>
-                  <p className="text-xs text-muted-foreground pt-2">
-                    Talk to the seller in chat to unlock full access
-                  </p>
-                </div>
+                <p className="text-xs text-amber-800 dark:text-amber-200 mb-3">
+                  Contact the seller in chat to request full access. They may send you the complete PDF or negotiate access.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowPdfModal(false);
+                    handleCreateChat();
+                  }}
+                  className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  data-testid="button-contact-seller-pdf"
+                >
+                  Contact Seller in Chat
+                </button>
               </div>
             </div>
           </div>
