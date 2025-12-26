@@ -7,7 +7,13 @@ import { useCreateChat } from "@/hooks/use-chats";
 import { Document, Page, pdfjs } from "react-pdf";
 import type { Listing } from "@shared/schema";
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up PDF.js worker from node_modules
+if (typeof window !== 'undefined') {
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.js',
+    import.meta.url,
+  ).toString();
+}
 
 export default function ListingDetail() {
   const [, params] = useRoute("/listing/:id");
