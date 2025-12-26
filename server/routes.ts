@@ -28,8 +28,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  // Serve uploaded files (images, videos, PDFs)
-  app.use(express.static(uploadsDir));
+  // Serve uploaded files (images, videos, PDFs) at /uploads path
+  app.use('/uploads', express.static(uploadsDir));
 
   // Auth Routes (Disabled - using default user for MVP)
   // app.post(api.auth.register.path, ...);
