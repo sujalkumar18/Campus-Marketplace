@@ -260,24 +260,34 @@ export default function ListingDetail() {
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                You can preview the first {listing.pdfSlidesAllowed || "all"} pages of this PDF.
-              </p>
+            <div className="flex-1 overflow-auto p-4 space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                  Preview Limit: {listing.pdfSlidesAllowed} slides
+                </p>
+                <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
+                  Seller allows you to read the first {listing.pdfSlidesAllowed} slides of this PDF.
+                </p>
+              </div>
               <div className="bg-muted rounded-lg p-8 text-center">
                 <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground mb-4">
-                  PDF content would be displayed here in a production app
+                  Preview of first {listing.pdfSlidesAllowed} slides
                 </p>
-                <a
-                  href={listing.pdfUrl || ""}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
-                  data-testid="link-download-pdf"
-                >
-                  Download PDF
-                </a>
+                <div className="space-y-2">
+                  <a
+                    href={listing.pdfUrl || ""}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium"
+                    data-testid="link-download-pdf"
+                  >
+                    Download Full PDF
+                  </a>
+                  <p className="text-xs text-muted-foreground pt-2">
+                    Talk to the seller in chat to unlock full access
+                  </p>
+                </div>
               </div>
             </div>
           </div>

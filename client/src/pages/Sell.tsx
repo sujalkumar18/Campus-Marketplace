@@ -54,6 +54,11 @@ export default function Sell() {
     }
     const file = e.target.files?.[0];
     if (file) {
+      // Check if file is HEIC (iPhone format) - warn user
+      if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic")) {
+        alert("iPhone photos (HEIC) may not display on all devices. Please convert to JPG for best compatibility.");
+        return;
+      }
       setUploading(true);
       const formData = new FormData();
       formData.append("file", file);
