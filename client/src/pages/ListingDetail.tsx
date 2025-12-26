@@ -2,15 +2,20 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2, ChevronRight } from "lucide-react";
 import { useCreateChat } from "@/hooks/use-chats";
+import { Document, Page, pdfjs } from "react-pdf";
 import type { Listing } from "@shared/schema";
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 export default function ListingDetail() {
   const [, params] = useRoute("/listing/:id");
   const [, setLocation] = useLocation();
   const listingId = Number(params?.id);
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfCurrentPage, setPdfCurrentPage] = useState(1);
+  const [pdfNumPages, setPdfNumPages] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [interestType, setInterestType] = useState<"buy" | "rent" | null>(null);
@@ -247,46 +252,86 @@ export default function ListingDetail() {
       </main>
 
       {/* PDF Modal */}
-      {showPdfModal && (
+      {showPdfModal && listing.pdfUrl && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-2xl max-w-md w-full max-h-[80vh] flex flex-col">
+          <div className="bg-background rounded-2xl max-w-md w-full max-h-[90vh] flex flex-col">
             <div className="p-4 border-b border-border flex items-center justify-between sticky-top">
               <h2 className="font-bold text-foreground">PDF Preview</h2>
               <button
-                onClick={() => setShowPdfModal(false)}
+                onClick={() => {
+                  setShowPdfModal(false);
+                  setPdfCurrentPage(1);
+                }}
                 className="text-muted-foreground hover:text-foreground"
                 data-testid="button-close-pdf"
               >
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-auto p-4 space-y-4">
+            <div className="flex-1 overflow-auto p-4 space-y-4 flex flex-col">
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
                 <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
                   Preview Limit: {listing.pdfSlidesAllowed} slides
                 </p>
                 <p className="text-xs text-blue-800 dark:text-blue-200 mt-1">
-                  Seller allows you to read the first {listing.pdfSlidesAllowed} slides of this PDF. Full PDF access is restricted.
+                  You can read the first {listing.pdfSlidesAllowed} slides of this PDF.
                 </p>
               </div>
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-100 mb-3">
-                  Want to see the full PDF?
-                </p>
-                <p className="text-xs text-amber-800 dark:text-amber-200 mb-3">
-                  Contact the seller in chat to request full access. They may send you the complete PDF or negotiate access.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowPdfModal(false);
-                    handleCreateChat();
-                  }}
-                  className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
-                  data-testid="button-contact-seller-pdf"
+
+              {/* PDF Viewer */}
+              <div className="flex-1 bg-muted rounded-lg flex items-center justify-center overflow-auto">
+                <Document 
+                  file={listing.pdfUrl}
+                  onLoadSuccess={({ numPages }) => setPdfNumPages(numPages)}
+                  loading={<Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />}
+                  error={<p className="text-red-600">Failed to load PDF</p>}
                 >
-                  Contact Seller in Chat
+                  {pdfCurrentPage <= (listing.pdfSlidesAllowed || numPages) && (
+                    <Page 
+                      pageNumber={pdfCurrentPage} 
+                      width={280}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                    />
+                  )}
+                </Document>
+              </div>
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between gap-2 bg-muted/50 p-3 rounded-lg">
+                <button
+                  onClick={() => setPdfCurrentPage(Math.max(1, pdfCurrentPage - 1))}
+                  disabled={pdfCurrentPage === 1}
+                  className="p-2 hover:bg-muted rounded disabled:opacity-50 transition-colors"
+                  data-testid="button-pdf-prev"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="text-sm font-medium text-foreground">
+                  {pdfCurrentPage} / {Math.min(listing.pdfSlidesAllowed || 0, pdfNumPages)}
+                </span>
+                <button
+                  onClick={() => setPdfCurrentPage(Math.min(listing.pdfSlidesAllowed || pdfNumPages, pdfCurrentPage + 1))}
+                  disabled={pdfCurrentPage >= (listing.pdfSlidesAllowed || 0)}
+                  className="p-2 hover:bg-muted rounded disabled:opacity-50 transition-colors"
+                  data-testid="button-pdf-next"
+                >
+                  <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* Request Full Access */}
+              <button
+                onClick={() => {
+                  setShowPdfModal(false);
+                  setPdfCurrentPage(1);
+                  handleCreateChat();
+                }}
+                className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                data-testid="button-contact-seller-pdf"
+              >
+                Request Full Access via Chat
+              </button>
             </div>
           </div>
         </div>
