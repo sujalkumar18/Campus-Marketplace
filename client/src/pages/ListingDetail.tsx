@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
 import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2 } from "lucide-react";
 import { useCreateChat } from "@/hooks/use-chats";
+import { PDFViewer } from "@/components/PDFViewer";
 import type { Listing } from "@shared/schema";
 
 export default function ListingDetail() {
@@ -247,43 +248,43 @@ export default function ListingDetail() {
         </div>
       </main>
 
-      {/* PDF Modal */}
+      {/* PDF Modal - Scribd-like Viewer */}
       {showPdfModal && listing.pdfUrl && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-background rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <h2 className="font-bold text-foreground">PDF Preview - First {listing.pdfSlidesAllowed} Slides</h2>
+            <div className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background z-10">
+              <div className="flex flex-col gap-1">
+                <h2 className="font-bold text-foreground">PDF Preview</h2>
+                <p className="text-xs text-muted-foreground">
+                  Showing first {listing.pdfSlidesAllowed || 1} slide{(listing.pdfSlidesAllowed ?? 1) > 1 ? "s" : ""}
+                </p>
+              </div>
               <button
                 onClick={() => {
                   setShowPdfModal(false);
                   setPdfLoading(true);
                 }}
-                className="text-muted-foreground hover:text-foreground text-xl"
+                className="text-muted-foreground hover:text-foreground text-2xl font-light"
                 data-testid="button-close-pdf"
               >
                 ✕
               </button>
             </div>
-            <div className="flex-1 overflow-auto relative bg-muted/30">
-              {pdfLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">Loading PDF...</p>
-                  </div>
-                </div>
-              )}
-              <iframe
-                src={`${listing.pdfUrl}#page=1`}
-                onLoad={() => setPdfLoading(false)}
-                className="w-full h-full border-0"
-                data-testid="pdf-viewer-iframe"
+
+            {/* PDF Viewer */}
+            <div className="flex-1 overflow-hidden relative">
+              <PDFViewer
+                pdfUrl={listing.pdfUrl}
+                maxPages={listing.pdfSlidesAllowed || 1}
+                onLoadComplete={() => setPdfLoading(false)}
               />
             </div>
+
+            {/* Footer Actions */}
             <div className="p-4 border-t border-border space-y-3 bg-background">
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
                 <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
-                  Preview Limit: {listing.pdfSlidesAllowed} slides allowed
+                  Want to see more? Contact the seller to request full access.
                 </p>
               </div>
               <button
@@ -292,7 +293,7 @@ export default function ListingDetail() {
                   setPdfLoading(true);
                   handleCreateChat();
                 }}
-                className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="w-full py-3 px-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
                 data-testid="button-contact-seller-pdf"
               >
                 Request Full Access via Chat
