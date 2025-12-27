@@ -7,13 +7,8 @@ import { useCreateChat } from "@/hooks/use-chats";
 import { Document, Page, pdfjs } from "react-pdf";
 import type { Listing } from "@shared/schema";
 
-// Set up PDF.js worker from node_modules
-if (typeof window !== 'undefined') {
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.js',
-    import.meta.url,
-  ).toString();
-}
+// Set up PDF.js worker from CDN
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 export default function ListingDetail() {
   const [, params] = useRoute("/listing/:id");
@@ -287,7 +282,7 @@ export default function ListingDetail() {
               {/* PDF Viewer */}
               <div className="flex-1 bg-muted rounded-lg flex items-center justify-center overflow-auto">
                 <Document 
-                  file={listing.pdfUrl}
+                  file={`${window.location.origin}${listing.pdfUrl}`}
                   onLoadSuccess={({ numPages }) => setPdfNumPages(numPages)}
                   loading={<Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />}
                   error={<p className="text-red-600">Failed to load PDF</p>}
