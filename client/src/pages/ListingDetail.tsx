@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle } from "lucide-react";
+import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2 } from "lucide-react";
 import { useCreateChat } from "@/hooks/use-chats";
 import type { Listing } from "@shared/schema";
 
@@ -11,6 +11,7 @@ export default function ListingDetail() {
   const [, setLocation] = useLocation();
   const listingId = Number(params?.id);
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [interestType, setInterestType] = useState<"buy" | "rent" | null>(null);
@@ -249,45 +250,53 @@ export default function ListingDetail() {
       {/* PDF Modal */}
       {showPdfModal && listing.pdfUrl && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-2xl max-w-md w-full flex flex-col">
+          <div className="bg-background rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-4 border-b border-border flex items-center justify-between">
-              <h2 className="font-bold text-foreground">PDF Preview</h2>
+              <h2 className="font-bold text-foreground">PDF Preview - First {listing.pdfSlidesAllowed} Slides</h2>
               <button
-                onClick={() => setShowPdfModal(false)}
-                className="text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  setShowPdfModal(false);
+                  setPdfLoading(true);
+                }}
+                className="text-muted-foreground hover:text-foreground text-xl"
                 data-testid="button-close-pdf"
               >
                 ✕
               </button>
             </div>
-            <div className="p-6 space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-4">
-                <p className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                  Preview Limit: {listing.pdfSlidesAllowed} slides
-                </p>
-                <p className="text-xs text-blue-800 dark:text-blue-200">
-                  The seller has allowed you to preview the first {listing.pdfSlidesAllowed} slides of this PDF.
+            <div className="flex-1 overflow-auto relative bg-muted/30">
+              {pdfLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-background/50">
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Loading PDF...</p>
+                  </div>
+                </div>
+              )}
+              <iframe
+                src={`${listing.pdfUrl}#page=1`}
+                onLoad={() => setPdfLoading(false)}
+                className="w-full h-full border-0"
+                data-testid="pdf-viewer-iframe"
+              />
+            </div>
+            <div className="p-4 border-t border-border space-y-3 bg-background">
+              <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
+                <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                  Preview Limit: {listing.pdfSlidesAllowed} slides allowed
                 </p>
               </div>
-
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
-                <p className="text-sm font-semibold text-amber-900 dark:text-amber-100 mb-3">
-                  Want to see the full PDF?
-                </p>
-                <p className="text-xs text-amber-800 dark:text-amber-200 mb-4">
-                  Contact the seller through chat to request full access. They may share the complete PDF with you.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowPdfModal(false);
-                    handleCreateChat();
-                  }}
-                  className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
-                  data-testid="button-contact-seller-pdf"
-                >
-                  Request Full Access via Chat
-                </button>
-              </div>
+              <button
+                onClick={() => {
+                  setShowPdfModal(false);
+                  setPdfLoading(true);
+                  handleCreateChat();
+                }}
+                className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg transition-colors"
+                data-testid="button-contact-seller-pdf"
+              >
+                Request Full Access via Chat
+              </button>
             </div>
           </div>
         </div>
