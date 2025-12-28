@@ -62,11 +62,10 @@ export function ListingCard({ listing, onClick }: ListingCardProps) {
         <h3 className="font-display font-bold text-lg text-foreground line-clamp-1 group-hover:text-primary transition-colors">
           {listing.title}
         </h3>
-        <p className="text-sm text-muted-foreground mt-1.5 line-clamp-2 flex-grow font-medium">
-          {listing.description}
-        </p>
         <div className="mt-4 flex items-center justify-between pt-2 border-t border-border/30">
-          <span className="text-2xl font-black gradient-primary bg-clip-text text-transparent">₹{listing.price}</span>
+          <div className="w-16 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-sm">
+            <span className="text-white font-bold text-sm">₹{listing.price}</span>
+          </div>
           <span className="text-xs text-muted-foreground bg-muted/60 px-2.5 py-1.5 rounded-lg font-semibold">
             {listing.category}
           </span>
