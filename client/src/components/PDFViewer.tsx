@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Loader2, ChevronUp, ChevronDown } from "lucide-react";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Use a more reliable worker source
+const PDF_JS_VERSION = "4.10.38"; // Updated version matching latest stable if possible or known stable
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 interface PDFViewerProps {
   pdfUrl: string;
@@ -15,22 +17,22 @@ export function PDFViewer({ pdfUrl, maxPages, onLoadComplete }: PDFViewerProps) 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalPages, setTotalPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    let isMounted = true;
     const loadPDF = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        // Fetch the PDF
-        const response = await fetch(pdfUrl);
-        if (!response.ok) throw new Error("Failed to load PDF");
-        const arrayBuffer = await response.arrayBuffer();
-
-        // Load with pdf.js
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        setTotalPages(Math.min(pdf.numPages, maxPages));
+        // Load with pdf.js using the URL directly
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        const pdf = await loadingTask.promise;
+        
+        if (!isMounted) return;
+        
+        const actualMaxPages = Math.min(pdf.numPages, maxPages);
+        setTotalPages(actualMaxPages);
 
         // Clear container
         if (containerRef.current) {
@@ -38,7 +40,8 @@ export function PDFViewer({ pdfUrl, maxPages, onLoadComplete }: PDFViewerProps) 
         }
 
         // Render pages
-        for (let pageNum = 1; pageNum <= Math.min(pdf.numPages, maxPages); pageNum++) {
+        for (let pageNum = 1; pageNum <= actualMaxPages; pageNum++) {
+          if (!isMounted) break;
           const page = await pdf.getPage(pageNum);
           const viewport = page.getViewport({ scale: 1.5 });
 
@@ -46,6 +49,7 @@ export function PDFViewer({ pdfUrl, maxPages, onLoadComplete }: PDFViewerProps) 
           const context = canvas.getContext("2d");
           canvas.width = viewport.width;
           canvas.height = viewport.height;
+          canvas.className = "w-full h-auto";
 
           if (context) {
             await page.render({
@@ -68,17 +72,24 @@ export function PDFViewer({ pdfUrl, maxPages, onLoadComplete }: PDFViewerProps) 
           containerRef.current?.appendChild(pageDiv);
         }
 
-        setIsLoading(false);
-        onLoadComplete?.();
+        if (isMounted) {
+          setIsLoading(false);
+          onLoadComplete?.();
+        }
       } catch (err) {
         console.error("PDF loading error:", err);
-        setError(err instanceof Error ? err.message : "Failed to load PDF");
-        setIsLoading(false);
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : "Failed to load PDF");
+          setIsLoading(false);
+        }
       }
     };
 
     loadPDF();
-  }, [pdfUrl, maxPages, onLoadComplete]);
+    return () => {
+      isMounted = false;
+    };
+  }, [pdfUrl, maxPages]); // Removed onLoadComplete from dependencies to avoid infinite loops if it changes
 
   const scroll = (direction: "up" | "down") => {
     if (containerRef.current) {

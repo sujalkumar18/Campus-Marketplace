@@ -248,15 +248,15 @@ export default function ListingDetail() {
         </div>
       </main>
 
-      {/* PDF Modal - Scribd-like Viewer */}
+      {/* PDF Modal - Full Screen Viewer */}
       {showPdfModal && listing.pdfUrl && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-            <div className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background z-10">
-              <div className="flex flex-col gap-1">
+        <div className="fixed inset-0 bg-background z-50 flex flex-col">
+          <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-3">
+            <div className="max-w-4xl mx-auto flex items-center justify-between w-full">
+              <div className="flex flex-col">
                 <h2 className="font-bold text-foreground">PDF Preview</h2>
                 <p className="text-xs text-muted-foreground">
-                  Showing first {listing.pdfSlidesAllowed || 1} slide{(listing.pdfSlidesAllowed ?? 1) > 1 ? "s" : ""}
+                  Showing first {listing.pdfSlidesAllowed || 1} page{(listing.pdfSlidesAllowed ?? 1) > 1 ? "s" : ""}
                 </p>
               </div>
               <button
@@ -264,24 +264,24 @@ export default function ListingDetail() {
                   setShowPdfModal(false);
                   setPdfLoading(true);
                 }}
-                className="text-muted-foreground hover:text-foreground text-2xl font-light"
+                className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
                 data-testid="button-close-pdf"
               >
                 ✕
               </button>
             </div>
+          </header>
 
-            {/* PDF Viewer */}
-            <div className="flex-1 overflow-hidden relative">
-              <PDFViewer
-                pdfUrl={listing.pdfUrl}
-                maxPages={listing.pdfSlidesAllowed || 1}
-                onLoadComplete={() => setPdfLoading(false)}
-              />
-            </div>
+          <div className="flex-1 overflow-hidden relative max-w-4xl mx-auto w-full">
+            <PDFViewer
+              pdfUrl={listing.pdfUrl}
+              maxPages={listing.pdfSlidesAllowed || 1}
+              onLoadComplete={() => setPdfLoading(false)}
+            />
+          </div>
 
-            {/* Footer Actions */}
-            <div className="p-4 border-t border-border space-y-3 bg-background">
+          <footer className="p-4 border-t border-border bg-background sticky bottom-0">
+            <div className="max-w-4xl mx-auto space-y-3">
               <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
                 <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">
                   Want to see more? Contact the seller to request full access.
@@ -293,13 +293,13 @@ export default function ListingDetail() {
                   setPdfLoading(true);
                   handleCreateChat();
                 }}
-                className="w-full py-3 px-3 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition-colors"
+                className="w-full py-3 px-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center justify-center gap-2"
                 data-testid="button-contact-seller-pdf"
               >
                 Request Full Access via Chat
               </button>
             </div>
-          </div>
+          </footer>
         </div>
       )}
 
