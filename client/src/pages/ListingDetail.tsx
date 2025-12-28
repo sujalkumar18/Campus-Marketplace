@@ -67,7 +67,7 @@ export default function ListingDetail() {
   };
 
   const images = Array.isArray(listing.imageUrls) ? listing.imageUrls : [];
-  const currentImageIndex = 0;
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const isRental = listing.type === "rent";
 
   return (
@@ -88,17 +88,57 @@ export default function ListingDetail() {
 
       {/* Main Content */}
       <main className="px-4 py-4 max-w-md mx-auto">
-        {/* Images */}
+        {/* Images Carousel */}
         {images.length > 0 ? (
-          <div className="mb-6">
-            <img
-              src={images[currentImageIndex]}
-              alt={listing.title}
-              className="w-full aspect-square rounded-2xl object-cover"
-            />
+          <div className="mb-6 relative group">
+            <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
+              <img
+                src={images[currentImageIndex]}
+                alt={`${listing.title} - Image ${currentImageIndex + 1}`}
+                className="w-full h-full object-cover transition-all duration-300"
+              />
+              
+              {/* Navigation Arrows */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    data-testid="button-prev-image"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    data-testid="button-next-image"
+                  >
+                    <ChevronLeft className="w-5 h-5 rotate-180" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Thumbnail Navigation */}
             {images.length > 1 && (
-              <p className="text-xs text-muted-foreground mt-2 text-center">
-                1 of {images.length} photos
+              <div className="flex justify-center gap-2 mt-3 overflow-x-auto pb-1">
+                {images.map((url, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all flex-shrink-0 ${
+                      currentImageIndex === idx ? "border-primary scale-110 shadow-sm" : "border-transparent opacity-50"
+                    }`}
+                  >
+                    <img src={url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {images.length > 1 && (
+              <p className="text-xs text-muted-foreground mt-2 text-center font-medium">
+                {currentImageIndex + 1} of {images.length} photos
               </p>
             )}
           </div>

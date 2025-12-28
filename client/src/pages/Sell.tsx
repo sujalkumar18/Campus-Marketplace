@@ -48,31 +48,43 @@ export default function Sell() {
   const selectedCategory = watchForm("category");
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (imageUrls.length >= 5) {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const remainingSlots = 5 - imageUrls.length;
+    if (remainingSlots <= 0) {
       alert("Maximum 5 images allowed");
       return;
     }
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check if file is HEIC (iPhone format) - warn user
-      if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic")) {
-        alert("iPhone photos (HEIC) may not display on all devices. Please convert to JPG for best compatibility.");
-        return;
-      }
-      setUploading(true);
-      const formData = new FormData();
-      formData.append("file", file);
-      try {
+
+    const filesToUpload = Array.from(files).slice(0, remainingSlots);
+    setUploading(true);
+
+    try {
+      const uploadPromises = filesToUpload.map(async (file) => {
+        // Check if file is HEIC (iPhone format) - warn user
+        if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic")) {
+          console.warn("HEIC detected:", file.name);
+          // For now just proceeding, but alerting might be better done once
+        }
+        
+        const formData = new FormData();
+        formData.append("file", file);
         const res = await fetch("/api/upload", { method: "POST", body: formData });
         const data = await res.json();
-        if (data.url) {
-          setImageUrls([...imageUrls, data.url]);
-        }
-      } catch (err) {
-        console.error("Upload failed:", err);
-      } finally {
-        setUploading(false);
-      }
+        return data.url as string;
+      });
+
+      const newUrls = await Promise.all(uploadPromises);
+      const filteredUrls = newUrls.filter(Boolean);
+      setImageUrls((prev) => [...prev, ...filteredUrls]);
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("Some images failed to upload. Please try again.");
+    } finally {
+      setUploading(false);
+      // Reset input value to allow selecting same file again
+      e.target.value = "";
     }
   };
 
@@ -191,6 +203,7 @@ export default function Sell() {
                 </div>
                 <input
                   type="file"
+                  multiple
                   accept="image/*"
                   onChange={handleImageUpload}
                   disabled={uploading}
