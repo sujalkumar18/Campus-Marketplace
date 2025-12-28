@@ -18,6 +18,7 @@ export default function ListingDetail() {
   const [interestType, setInterestType] = useState<"buy" | "rent" | null>(null);
   const [returnDate, setReturnDate] = useState("");
   const [showReturnConfirm, setShowReturnConfirm] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const { data: listing, isLoading } = useQuery<Listing>({
     queryKey: [`/api/listings/${listingId}`],
@@ -67,7 +68,6 @@ export default function ListingDetail() {
   };
 
   const images = Array.isArray(listing.imageUrls) ? listing.imageUrls : [];
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const isRental = listing.type === "rent";
 
   return (
