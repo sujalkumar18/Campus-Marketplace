@@ -3,7 +3,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { useCreateListing } from "@/hooks/use-listings";
 import { useLocation } from "wouter";
 import { Camera, Upload, Loader2, IndianRupee, X, FileText, Video } from "lucide-react";
-import { useForm, watch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertListingSchema } from "@shared/schema";
 import { z } from "zod";
