@@ -2,9 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import { Loader2, ChevronUp, ChevronDown } from "lucide-react";
 
-// Use a more reliable worker source
-const PDF_JS_VERSION = "4.10.38"; // Updated version matching latest stable if possible or known stable
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// Use a more reliable worker source that matches the installed version exactly
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 interface PDFViewerProps {
   pdfUrl: string;
