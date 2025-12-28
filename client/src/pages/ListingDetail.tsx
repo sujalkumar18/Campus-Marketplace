@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { BottomNav } from "@/components/BottomNav";
-import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2 } from "lucide-react";
+import { ChevronLeft, FileText, ShoppingCart, Calendar, AlertCircle, Loader2, Play } from "lucide-react";
 import { useCreateChat } from "@/hooks/use-chats";
 import { PDFViewer } from "@/components/PDFViewer";
 import type { Listing } from "@shared/schema";
@@ -150,6 +150,23 @@ export default function ListingDetail() {
 
         {/* Details */}
         <div className="space-y-4 mb-6">
+          {/* Video Section */}
+          {listing.videoUrl && (
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground mb-2">Video Preview</p>
+              <div className="relative aspect-video rounded-2xl overflow-hidden bg-black border border-border shadow-sm">
+                <video
+                  src={listing.videoUrl}
+                  controls
+                  className="w-full h-full object-contain"
+                  poster={images[0]}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          )}
+
           <div>
             <p className="text-sm text-muted-foreground">Price</p>
             <p className="text-3xl font-bold text-primary">₹{listing.price}</p>
