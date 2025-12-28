@@ -158,6 +158,8 @@ export default function ListingDetail() {
                 <video
                   src={listing.videoUrl}
                   controls
+                  controlsList="nodownload noremoteplayback"
+                  disablePictureInPicture
                   className="w-full h-full object-contain"
                   poster={images[0]}
                 >
