@@ -55,6 +55,7 @@ export function PDFViewer({ pdfUrl, maxPages, onLoadComplete }: PDFViewerProps) 
             await page.render({
               canvasContext: context,
               viewport: viewport,
+              canvas: canvas
             }).promise;
           }
 
