@@ -103,7 +103,7 @@ export default function ListingDetail() {
                   key={mediaItems[currentImageIndex]}
                   src={mediaItems[currentImageIndex]}
                   controls
-                  controlsList="nodownload noremoteplayback"
+                  controlsList="nodownload noremoteplayback noplaybackrate"
                   disablePictureInPicture
                   className="w-full h-full object-contain bg-black"
                 >
