@@ -35,7 +35,7 @@ export async function registerRoutes(
   app.post("/api/auth/register", async (req, res) => {
     try {
       const { email, phone, username, password } = req.body;
-      if (!email.endsWith("@stu.alliance.edu.in")) {
+      if (!email || !email.endsWith("@stu.alliance.edu.in")) {
         return res.status(400).json({ message: "Only Alliance University student emails are allowed" });
       }
       

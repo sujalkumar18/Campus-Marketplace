@@ -40,7 +40,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
+  async createUser(insertUser: any): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
@@ -138,35 +138,9 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller"): Promise<RentalReturn> {
-    const [rental] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
-    if (!rental) throw new Error("Rental return not found");
-
-    const now = new Date();
-    const returnDate = new Date(rental.returnDate);
-    const isLate = now > returnDate;
-    const penalty = isLate ? 500 : 0; // ₹500 penalty for late return
-
-    let buyerConfirmed = rental.buyerConfirmed;
-    let sellerConfirmed = rental.sellerConfirmed;
-
-    if (confirmedBy === "buyer") buyerConfirmed = true;
-    if (confirmedBy === "seller") sellerConfirmed = true;
-
-    const status = buyerConfirmed && sellerConfirmed ? "completed" : isLate ? "late" : "pending";
-
-    const [updated] = await db.update(rentalReturns)
-      .set({
-        buyerConfirmed,
-        sellerConfirmed,
-        isLate,
-        penalty,
-        status,
-      })
-      .where(eq(rentalReturns.id, id))
-      .returning();
-
-    return updated;
+  async updateUser(id: number, update: Partial<User>): Promise<User | undefined> {
+    const [user] = await db.update(users).set(update).where(eq(users.id, id)).returning();
+    return user;
   }
 }
 
