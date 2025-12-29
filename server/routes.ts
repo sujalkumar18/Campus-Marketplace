@@ -31,9 +31,67 @@ export async function registerRoutes(
   // Serve uploaded files (images, videos, PDFs) at /uploads path
   app.use('/uploads', express.static(uploadsDir));
 
-  // Auth Routes (Disabled - using default user for MVP)
-  // app.post(api.auth.register.path, ...);
-  // app.post(api.auth.login.path, ...);
+  // Auth Routes
+  app.post("/api/auth/register", async (req, res) => {
+    try {
+      const { email, phone, username, password } = req.body;
+      if (!email.endsWith("@stu.alliance.edu.in")) {
+        return res.status(400).json({ message: "Only Alliance University student emails are allowed" });
+      }
+      
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const user = await storage.createUser({
+        username,
+        password,
+        email,
+        phone,
+        otp,
+        otpExpiry: new Date(Date.now() + 10 * 60 * 1000), // 10 mins
+        isVerified: false,
+        college: "Alliance University",
+        avatar: null
+      });
+      
+      console.log(`[SIMULATED OTP] For user ${username}: ${otp}`);
+      res.status(201).json({ message: "OTP sent to your email and phone", userId: user.id });
+    } catch (err) {
+      console.error("Registration error:", err);
+      res.status(500).json({ message: "Registration failed" });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      const user = await storage.getUserByUsername(username);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      if (!user.isVerified) {
+        return res.status(403).json({ message: "Please verify your account first", userId: user.id });
+      }
+      res.json(user);
+    } catch (err) {
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  app.post("/api/auth/verify", async (req, res) => {
+    try {
+      const { userId, otp } = req.body;
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      
+      if (user.otp === otp && user.otpExpiry && user.otpExpiry > new Date()) {
+        const updatedUser = await storage.updateUser(userId, { isVerified: true, otp: null, otpExpiry: null });
+        res.json(updatedUser);
+      } else {
+        res.status(400).json({ message: "Invalid or expired OTP" });
+      }
+    } catch (err) {
+      res.status(500).json({ message: "Verification failed" });
+    }
+  });
 
   // Listings Routes
   app.get(api.listings.list.path, async (req, res) => {
