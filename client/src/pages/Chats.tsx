@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/BottomNav";
 import { useChats } from "@/hooks/use-chats";
 import { Link } from "wouter";
@@ -5,7 +6,12 @@ import { MessageCircle, ChevronRight, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Chats() {
+  const { user } = useAuth();
   const { data: chats, isLoading } = useChats();
+
+  const filteredChats = chats?.filter(chat => 
+    chat.buyerId === user?.id || chat.sellerId === user?.id
+  ) || [];
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -20,13 +26,13 @@ export default function Chats() {
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
-        ) : chats?.length === 0 ? (
+        ) : filteredChats.length === 0 ? (
           <div className="text-center py-20 opacity-50">
             <MessageCircle className="w-12 h-12 mx-auto mb-2" />
             <p>No active conversations</p>
           </div>
         ) : (
-          chats?.map((chat) => (
+          filteredChats.map((chat) => (
             <Link key={chat.id} href={`/chats/${chat.id}`} className="block">
               <div className="bg-card p-4 rounded-2xl border border-border/50 shadow-sm hover:shadow-md hover:border-primary/20 transition-all flex items-center gap-4 group">
                 {/* Avatar Placeholder */}

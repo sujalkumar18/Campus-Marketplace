@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useChatMessages, useSendMessage } from "@/hooks/use-chats";
@@ -13,6 +14,7 @@ const QUICK_REPLIES = [
 
 export default function ChatDetail() {
   const [, params] = useRoute("/chats/:id");
+  const { user } = useAuth();
   const chatId = Number(params?.id);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [inputText, setInputText] = useState("");
@@ -36,8 +38,7 @@ export default function ChatDetail() {
     );
   };
 
-  // Dummy current user ID for MVP styling (assuming we are sender 1)
-  const CURRENT_USER_ID = 1;
+  const CURRENT_USER_ID = user?.id || 1;
 
   return (
     <div className="flex flex-col h-screen bg-background">

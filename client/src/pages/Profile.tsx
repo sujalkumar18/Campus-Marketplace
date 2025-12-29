@@ -6,12 +6,12 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 export default function Profile() {
+  const { user } = useAuth();
   const { data: listings } = useListings();
   const { mutate: updateListing } = useUpdateListing();
   
-  // Default user info for MVP
-  const user = { username: "Alliance Student", college: "Alliance University" };
-  const myListings = listings?.filter(l => l.sellerId === 1) || [];
+  // Listings for the current unique visitor
+  const myListings = listings?.filter(l => l.sellerId === user?.id) || [];
 
   const markAsSold = (id: number) => {
     updateListing({ id, status: "sold" });

@@ -1,3 +1,4 @@
+import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { useCreateListing } from "@/hooks/use-listings";
@@ -30,6 +31,7 @@ export default function Sell() {
   const [videoUrl, setVideoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  const { user } = useAuth();
   const {
     register,
     handleSubmit,
@@ -39,7 +41,7 @@ export default function Sell() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: "sell",
-      sellerId: 1,
+      sellerId: user?.id || 1,
       category: "Books",
       imageUrls: [],
     }
