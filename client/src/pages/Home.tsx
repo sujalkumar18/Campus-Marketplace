@@ -16,8 +16,15 @@ export default function Home() {
 
   const { data: listings, isLoading } = useListings({
     category: activeCategory === "All" ? undefined : activeCategory,
-    search: searchTerm || undefined,
   });
+
+  const filteredListings = listings?.filter((listing) => {
+    const matchesSearch = !searchTerm || 
+      listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      listing.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const isAvailable = listing.status !== "sold" && listing.status !== "rented";
+    return matchesSearch && isAvailable;
+  }) || [];
 
   const { mutate: createChat } = useCreateChat();
 
@@ -80,31 +87,25 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {(() => {
-              const availableListings = listings?.filter(
-                (listing) => listing.status !== "sold" && listing.status !== "rented"
-              ) || [];
-              
-              return availableListings.length === 0 ? (
-                <div className="text-center py-20 bg-gradient-to-b from-muted/20 to-muted/5 rounded-3xl border-2 border-dashed border-border">
-                  <div className="w-16 h-16 rounded-full gradient-primary/10 mx-auto mb-4 flex items-center justify-center">
-                    <Search className="w-8 h-8 text-muted-foreground/50" />
-                  </div>
-                  <p className="text-lg font-semibold text-foreground">No items yet</p>
-                  <p className="text-sm text-muted-foreground mt-2">Try a different category or start selling!</p>
+            {filteredListings.length === 0 ? (
+              <div className="text-center py-20 bg-gradient-to-b from-muted/20 to-muted/5 rounded-3xl border-2 border-dashed border-border">
+                <div className="w-16 h-16 rounded-full gradient-primary/10 mx-auto mb-4 flex items-center justify-center">
+                  <Search className="w-8 h-8 text-muted-foreground/50" />
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {availableListings.map((listing) => (
-                    <ListingCard
-                      key={listing.id}
-                      listing={listing}
-                      onClick={() => handleListingClick(listing.id)}
-                    />
-                  ))}
-                </div>
-              );
-            })()}
+                <p className="text-lg font-semibold text-foreground">No items found</p>
+                <p className="text-sm text-muted-foreground mt-2">Try a different search term or category!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {filteredListings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    onClick={() => handleListingClick(listing.id)}
+                  />
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>
