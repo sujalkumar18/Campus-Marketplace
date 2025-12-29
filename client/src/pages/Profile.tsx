@@ -6,20 +6,12 @@ import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 export default function Profile() {
-  const { user, logoutMutation } = useAuth();
-  const [, setLocation] = useLocation();
-  
-  // Fetch my listings - assuming backend filters by sellerId if we pass user.id contextually or implicitly
-  // For MVP demo, just fetching all and filtering client-side if needed, but here filtering isn't implemented in hook
-  // We'll just display the list as "My Listings" for visual completeness
   const { data: listings } = useListings();
   const { mutate: updateListing } = useUpdateListing();
-
-  const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => setLocation("/auth"),
-    });
-  };
+  
+  // Default user info for MVP
+  const user = { username: "Alliance Student", college: "Alliance University" };
+  const myListings = listings?.filter(l => l.sellerId === 1) || [];
 
   const markAsSold = (id: number) => {
     updateListing({ id, status: "sold" });
@@ -33,13 +25,13 @@ export default function Profile() {
         
         <div className="max-w-md mx-auto relative z-10 flex flex-col items-center text-center space-y-4">
           <div className="w-24 h-24 rounded-full bg-white/10 backdrop-blur-md border-4 border-white/20 flex items-center justify-center text-3xl font-bold shadow-2xl">
-            {user?.username?.[0]?.toUpperCase() || "U"}
+            {user.username[0].toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-display font-bold">{user?.username || "Guest User"}</h1>
+            <h1 className="text-2xl font-display font-bold">{user.username}</h1>
             <div className="flex items-center justify-center gap-1.5 text-primary-foreground/80 mt-1">
               <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium">{user?.college || "Alliance University"}</span>
+              <span className="text-sm font-medium">{user.college}</span>
             </div>
           </div>
         </div>
@@ -51,12 +43,16 @@ export default function Profile() {
         {/* Stats Card */}
         <div className="bg-card rounded-2xl p-6 shadow-lg border border-border/50 flex justify-between items-center">
           <div className="text-center flex-1 border-r border-border">
-            <p className="text-2xl font-bold text-foreground">12</p>
+            <p className="text-2xl font-bold text-foreground">
+              {myListings.filter(l => l.status === 'sold').length}
+            </p>
             <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mt-1">Sold</p>
           </div>
           <div className="text-center flex-1">
-            <p className="text-2xl font-bold text-foreground">4.8</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mt-1">Rating</p>
+            <p className="text-2xl font-bold text-foreground">
+              {myListings.length}
+            </p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mt-1">Total Items</p>
           </div>
         </div>
 
@@ -70,48 +66,49 @@ export default function Profile() {
           </div>
 
           <div className="space-y-3">
-            {listings?.slice(0, 3).map((listing) => (
-              <div key={listing.id} className="bg-card p-3 rounded-xl border border-border shadow-sm flex gap-3">
-                <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
-                   {listing.imageUrl ? (
-                     <img src={listing.imageUrl} className="w-full h-full object-cover" />
-                   ) : (
-                     <div className="w-full h-full bg-secondary" />
-                   )}
-                </div>
-                <div className="flex-1 flex flex-col justify-between py-1">
-                  <div>
-                    <h3 className="font-bold text-sm line-clamp-1">{listing.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">₹{listing.price}</p>
-                  </div>
-                  
-                  {listing.status === 'available' ? (
-                     <button 
-                       onClick={() => markAsSold(listing.id)}
-                       className="self-start flex items-center gap-1 text-xs font-medium text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-colors"
-                     >
-                       <CircleDashed className="w-3.5 h-3.5" />
-                       Mark as Sold
-                     </button>
-                  ) : (
-                    <div className="self-start flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      {listing.status}
-                    </div>
-                  )}
-                </div>
+            {myListings.length === 0 ? (
+              <div className="text-center py-12 bg-card rounded-xl border border-dashed border-border">
+                <Package className="w-12 h-12 text-muted-foreground/20 mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground font-medium">No items listed yet</p>
               </div>
-            ))}
+            ) : (
+              myListings.map((listing) => (
+                <div key={listing.id} className="bg-card p-3 rounded-xl border border-border shadow-sm flex gap-3">
+                  <div className="w-20 h-20 rounded-lg bg-muted flex-shrink-0 overflow-hidden">
+                    {listing.imageUrl ? (
+                      <img src={listing.imageUrl} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-secondary flex items-center justify-center">
+                        <Package className="w-8 h-8 text-muted-foreground/30" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div>
+                      <h3 className="font-bold text-sm line-clamp-1">{listing.title}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">₹{listing.price}</p>
+                    </div>
+                    
+                    {listing.status === 'available' ? (
+                      <button 
+                        onClick={() => markAsSold(listing.id)}
+                        className="self-start flex items-center gap-1 text-xs font-medium text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-colors"
+                      >
+                        <CircleDashed className="w-3.5 h-3.5" />
+                        Mark as Sold
+                      </button>
+                    ) : (
+                      <div className="self-start flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Sold
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
-
-        <button
-          onClick={handleLogout}
-          className="w-full py-4 rounded-xl border border-destructive/30 text-destructive bg-destructive/5 font-semibold hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
-        >
-          <LogOut className="w-5 h-5" />
-          Log Out
-        </button>
       </main>
 
       <BottomNav />
