@@ -6,9 +6,14 @@ import { relations } from "drizzle-orm";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(), // For MVP simple auth
+  password: text("password").notNull(),
   college: text("college").notNull().default("Alliance University"),
   avatar: text("avatar"),
+  email: text("email").unique(),
+  phone: text("phone").unique(),
+  isVerified: boolean("is_verified").default(false),
+  otp: text("otp"),
+  otpExpiry: timestamp("otp_expiry"),
 });
 
 export const listings = pgTable("listings", {
