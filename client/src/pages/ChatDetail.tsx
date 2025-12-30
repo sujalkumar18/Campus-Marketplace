@@ -1,8 +1,9 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useChatMessages, useSendMessage } from "@/hooks/use-chats";
-import { ArrowLeft, Send, MoreVertical, Loader2 } from "lucide-react";
+import { useChatMessages, useSendMessage, useChats } from "@/hooks/use-chats";
+import { useUpdateListing } from "@/hooks/use-listings";
+import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const QUICK_REPLIES = [
@@ -18,15 +19,33 @@ export default function ChatDetail() {
   const chatId = Number(params?.id);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [inputText, setInputText] = useState("");
+  const [showStatusModal, setShowStatusModal] = useState(false);
   
+  const { data: chats } = useChats();
+  const currentChat = chats?.find(c => c.id === chatId);
+  const listing = currentChat?.listing;
+  const isSeller = currentChat?.sellerId === user?.id;
+
   const { data: messages, isLoading } = useChatMessages(chatId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
+  const { mutate: updateListing } = useUpdateListing();
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleStatusUpdate = (newStatus: "sold" | "rented" | "available") => {
+    if (!listing) return;
+    updateListing({ id: listing.id, status: newStatus });
+    setShowStatusModal(false);
+    
+    const statusText = newStatus === "sold" ? "marked as sold" : 
+                      newStatus === "rented" ? "marked as rented" : "marked as available";
+    
+    handleSend(`[System] This item has been ${statusText}.`);
+  };
 
   const handleSend = (text: string = inputText) => {
     if (!text.trim()) return;
@@ -49,19 +68,101 @@ export default function ChatDetail() {
             <Link href="/chats" className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
               <ArrowLeft className="w-5 h-5 text-foreground" />
             </Link>
-            <div>
-              <h2 className="font-bold text-foreground">Chat</h2>
-              <p className="text-xs text-green-500 font-medium flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                Online
-              </p>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-bold text-foreground truncate">
+                {currentChat?.otherUser?.username || "Chat"}
+              </h2>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-green-500 font-medium flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Online
+                </p>
+                {listing && (
+                  <span className={cn(
+                    "text-[10px] px-1.5 py-0.5 rounded-full font-bold uppercase",
+                    listing.status === "available" ? "bg-emerald-100 text-emerald-700" :
+                    listing.status === "sold" ? "bg-amber-100 text-amber-700" :
+                    "bg-blue-100 text-blue-700"
+                  )}>
+                    {listing.status}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-          <button className="p-2 hover:bg-muted rounded-full">
-            <MoreVertical className="w-5 h-5 text-muted-foreground" />
-          </button>
+          
+          <div className="flex items-center gap-1">
+            {isSeller && listing?.status === "available" && (
+              <button 
+                onClick={() => setShowStatusModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-bold hover:bg-primary/20 transition-colors"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Mark Action
+              </button>
+            )}
+            {isSeller && listing?.status === "rented" && (
+              <button 
+                onClick={() => handleStatusUpdate("available")}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold hover:bg-blue-200 transition-colors"
+              >
+                <History className="w-3.5 h-3.5" />
+                Confirm Return
+              </button>
+            )}
+            <button className="p-2 hover:bg-muted rounded-full">
+              <MoreVertical className="w-5 h-5 text-muted-foreground" />
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Status Update Modal */}
+      {showStatusModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center sm:items-center p-4">
+          <div className="bg-background w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden animate-in slide-in-from-bottom duration-300">
+            <div className="p-6 space-y-4">
+              <div className="text-center space-y-1">
+                <h3 className="text-lg font-bold">Update Listing Status</h3>
+                <p className="text-sm text-muted-foreground">Select an action for this item</p>
+              </div>
+              
+              <div className="grid gap-3">
+                {listing?.type === "sell" ? (
+                  <button 
+                    onClick={() => handleStatusUpdate("sold")}
+                    className="flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl transition-colors border border-emerald-100"
+                  >
+                    <div className="text-left">
+                      <p className="font-bold">Mark as Sold</p>
+                      <p className="text-xs opacity-80">This will hide the item from search</p>
+                    </div>
+                    <CheckCircle2 className="w-6 h-6" />
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => handleStatusUpdate("rented")}
+                    className="flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-2xl transition-colors border border-blue-100"
+                  >
+                    <div className="text-left">
+                      <p className="font-bold">Mark as Rented</p>
+                      <p className="text-xs opacity-80">Track the rental period</p>
+                    </div>
+                    <Calendar className="w-6 h-6" />
+                  </button>
+                )}
+                
+                <button 
+                  onClick={() => setShowStatusModal(false)}
+                  className="w-full py-4 text-sm font-bold text-muted-foreground hover:bg-muted rounded-2xl transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
