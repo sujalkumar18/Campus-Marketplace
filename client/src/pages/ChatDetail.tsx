@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useChatMessages, useSendMessage, useChats } from "@/hooks/use-chats";
 import { useUpdateListing } from "@/hooks/use-listings";
-import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, History } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, History, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const QUICK_REPLIES = [

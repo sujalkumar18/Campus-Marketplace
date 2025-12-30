@@ -51,14 +51,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getListings(filters?: { category?: string; search?: string }): Promise<Listing[]> {
-    let query = db.select().from(listings);
+    let query = db.select().from(listings).$dynamic();
     
     if (filters?.category) {
       query = query.where(eq(listings.category, filters.category));
     }
-    
-    // Simple search implementation
-    // In a real app, use full text search
     
     return await query.orderBy(desc(listings.createdAt));
   }
@@ -138,9 +135,15 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async updateUser(id: number, update: Partial<User>): Promise<User | undefined> {
-    const [user] = await db.update(users).set(update).where(eq(users.id, id)).returning();
-    return user;
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller"): Promise<RentalReturn> {
+    const [rental] = await db.update(rentalReturns)
+      .set({
+        [confirmedBy === "buyer" ? "buyerConfirmed" : "sellerConfirmed"]: true,
+        status: "completed" // In a real app, check if both confirmed
+      })
+      .where(eq(rentalReturns.id, id))
+      .returning();
+    return rental;
   }
 }
 
