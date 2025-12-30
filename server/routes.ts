@@ -144,7 +144,22 @@ export async function registerRoutes(
     res.json({ url });
   });
 
-  // Purchase/Rent Endpoint
+  // Rental Endpoints
+  app.get("/api/rentals/:chatId", async (req, res) => {
+    const rental = await storage.getRentalReturn(Number(req.params.chatId));
+    res.json(rental || null);
+  });
+
+  app.post("/api/rentals", async (req, res) => {
+    const rental = await storage.createRentalReturn(req.body);
+    res.status(201).json(rental);
+  });
+
+  app.patch("/api/rentals/:id/confirm", async (req, res) => {
+    const { confirmedBy, type } = req.body;
+    const rental = await storage.confirmRentalReturn(Number(req.params.id), confirmedBy, type);
+    res.json(rental);
+  });
   app.post("/api/purchase", async (req, res) => {
     try {
       const { listingId, type, quantity } = req.body;

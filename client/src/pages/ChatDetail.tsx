@@ -36,11 +36,49 @@ export default function ChatDetail() {
     }
   }, [messages]);
 
-  const handleStatusUpdate = (newStatus: "sold" | "rented" | "available") => {
+  const { data: rental, refetch: refetchRental } = useQuery({
+    queryKey: ["/api/rentals", chatId],
+    queryFn: async () => {
+      const res = await fetch(`/api/rentals/${chatId}`);
+      return res.json();
+    },
+    enabled: !!chatId
+  });
+
+  const confirmRentalMutation = useMutation({
+    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" }) => {
+      const res = await fetch(`/api/rentals/${data.id}/confirm`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmedBy: data.confirmedBy, type: data.type })
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      refetchRental();
+      handleSend("[System] Rental status has been updated.");
+    }
+  });
+
+  const handleStatusUpdate = async (newStatus: "sold" | "rented" | "available") => {
     if (!listing) return;
     updateListing({ id: listing.id, status: newStatus });
     setShowStatusModal(false);
     
+    if (newStatus === "rented") {
+      // Create rental record if it doesn't exist
+      await fetch("/api/rentals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId,
+          listingId: listing.id,
+          returnDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days default
+        })
+      });
+      refetchRental();
+    }
+
     const statusText = newStatus === "sold" ? "marked as sold" : 
                       newStatus === "rented" ? "marked as rented" : "marked as available";
     
@@ -164,10 +202,87 @@ export default function ChatDetail() {
         </div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
-        <div className="max-w-md mx-auto space-y-4">
-          {isLoading ? (
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
+            <div className="max-w-md mx-auto space-y-4">
+              {/* Rental Tracking UI */}
+              {rental && (
+                <div className="bg-muted/50 rounded-2xl p-4 border border-border/50 mb-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-sm flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      Rental Tracking
+                    </h3>
+                    <span className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase",
+                      rental.status === "pending" ? "bg-amber-100 text-amber-700" :
+                      rental.status === "active" ? "bg-blue-100 text-blue-700" :
+                      "bg-emerald-100 text-emerald-700"
+                    )}>
+                      {rental.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Start Confirmation */}
+                    {rental.status === "pending" && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">Both parties must confirm to start the rental period.</p>
+                        <div className="flex gap-2">
+                          {isSeller ? (
+                            <button
+                              disabled={rental.sellerStarted || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "start" })}
+                              className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold disabled:opacity-50"
+                            >
+                              {rental.sellerStarted ? "Awaiting Buyer" : "Confirm Handover"}
+                            </button>
+                          ) : (
+                            <button
+                              disabled={rental.buyerStarted || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "start" })}
+                              className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold disabled:opacity-50"
+                            >
+                              {rental.buyerStarted ? "Awaiting Seller" : "Confirm Receipt"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Return Confirmation */}
+                    {rental.status === "active" && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">Return by:</span>
+                          <span className="font-bold">{new Date(rental.returnDate).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          {isSeller ? (
+                            <button
+                              disabled={rental.sellerConfirmed || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
+                              className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-50"
+                            >
+                              {rental.sellerConfirmed ? "Awaiting Buyer" : "Confirm Return"}
+                            </button>
+                          ) : (
+                            <button
+                              disabled={rental.buyerConfirmed || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
+                              className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-50"
+                            >
+                              {rental.buyerConfirmed ? "Awaiting Seller" : "Return Completed"}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {isLoading ? (
             <div className="flex justify-center py-10">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>

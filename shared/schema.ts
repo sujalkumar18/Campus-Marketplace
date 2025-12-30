@@ -53,12 +53,15 @@ export const rentalReturns = pgTable("rental_returns", {
   id: serial("id").primaryKey(),
   chatId: integer("chat_id").notNull(),
   listingId: integer("listing_id").notNull(),
+  startDate: timestamp("start_date").defaultNow(),
   returnDate: timestamp("return_date").notNull(),
   buyerConfirmed: boolean("buyer_confirmed").default(false),
   sellerConfirmed: boolean("seller_confirmed").default(false),
+  buyerStarted: boolean("buyer_started").default(false),
+  sellerStarted: boolean("seller_started").default(false),
   isLate: boolean("is_late").default(false),
   penalty: integer("penalty").default(0),
-  status: text("status").default("pending"), // pending | completed | late
+  status: text("status").default("pending"), // pending | active | completed | late
   createdAt: timestamp("created_at").defaultNow(),
 });
 

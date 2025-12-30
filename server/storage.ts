@@ -26,7 +26,7 @@ export interface IStorage {
   // Rental Returns
   getRentalReturn(chatId: number): Promise<RentalReturn | undefined>;
   createRentalReturn(rental: InsertRentalReturn): Promise<RentalReturn>;
-  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller"): Promise<RentalReturn>;
+  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end"): Promise<RentalReturn>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -135,14 +135,26 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller"): Promise<RentalReturn> {
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end"): Promise<RentalReturn> {
+    const update: any = {};
+    if (type === "start") {
+      update[confirmedBy === "buyer" ? "buyerStarted" : "sellerStarted"] = true;
+    } else {
+      update[confirmedBy === "buyer" ? "buyerConfirmed" : "sellerConfirmed"] = true;
+    }
+
     const [rental] = await db.update(rentalReturns)
-      .set({
-        [confirmedBy === "buyer" ? "buyerConfirmed" : "sellerConfirmed"]: true,
-        status: "completed" // In a real app, check if both confirmed
-      })
+      .set(update)
       .where(eq(rentalReturns.id, id))
       .returning();
+    
+    // Auto-update overall status
+    if (rental.buyerStarted && rental.sellerStarted && rental.status === "pending") {
+      await db.update(rentalReturns).set({ status: "active" }).where(eq(rentalReturns.id, id));
+    } else if (rental.buyerConfirmed && rental.sellerConfirmed && rental.status === "active") {
+      await db.update(rentalReturns).set({ status: "completed" }).where(eq(rentalReturns.id, id));
+    }
+
     return rental;
   }
 }
