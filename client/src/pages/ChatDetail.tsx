@@ -1,10 +1,11 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useChatMessages, useSendMessage, useChats } from "@/hooks/use-chats";
+import { useChatMessages, useSendMessage, useChats, useCreateChat } from "@/hooks/use-chats";
 import { useUpdateListing } from "@/hooks/use-listings";
-import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, History, Calendar } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, History, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 const QUICK_REPLIES = [
   "I'm at the library",
@@ -22,11 +23,12 @@ export default function ChatDetail() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   
   const { data: chats } = useChats();
+  const { mutate: createChatMutation } = useCreateChat();
   const currentChat = chats?.find(c => c.id === chatId);
   const listing = currentChat?.listing;
   const isSeller = currentChat?.sellerId === user?.id;
 
-  const { data: messages, isLoading } = useChatMessages(chatId);
+  const { data: messages, isLoading, refetch: refetchMessages } = useChatMessages(chatId);
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
   const { mutate: updateListing } = useUpdateListing();
 
@@ -56,6 +58,7 @@ export default function ChatDetail() {
     },
     onSuccess: () => {
       refetchRental();
+      refetchMessages();
       handleSend("[System] Rental status has been updated.");
     }
   });
