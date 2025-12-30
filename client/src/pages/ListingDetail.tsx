@@ -32,6 +32,17 @@ export default function ListingDetail() {
       const chat = await createChatMutation.mutateAsync({
         listingId: Number(listingId),
       });
+      
+      // Automatically send "I am interested" message
+      await fetch(`/api/chats/${chat.id}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: "I am interested",
+          senderId: 1 // Default user ID for MVP
+        })
+      });
+
       setShowInterestModal(false);
       setLocation(`/chats/${chat.id}`);
     } catch (error) {
