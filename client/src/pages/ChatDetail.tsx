@@ -232,32 +232,36 @@ export default function ChatDetail() {
                       <div className="space-y-2 p-2 bg-primary/5 rounded-xl border border-primary/10">
                         <p className="text-xs font-bold text-primary flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Agree on Return Timing
+                          Buyer: Propose Return Timing
                         </p>
                         <div className="flex gap-2">
-                          <input 
-                            type="datetime-local" 
-                            className="flex-1 text-xs p-1 rounded border"
-                            id="return-date-input"
-                            disabled={rental.sellerAgreedDate || !isSeller}
-                          />
-                          <button
-                            disabled={rental.sellerAgreedDate || !isSeller || confirmRentalMutation.isPending}
-                            onClick={() => {
-                              const input = document.getElementById('return-date-input') as HTMLInputElement;
-                              if (input?.value) {
-                                confirmRentalMutation.mutate({ 
-                                  id: rental.id, 
-                                  confirmedBy: "seller", 
-                                  type: "date",
-                                  date: input.value
-                                });
-                              }
-                            }}
-                            className="px-3 py-1 bg-primary text-primary-foreground rounded text-[10px] font-bold disabled:opacity-50"
-                          >
-                            {rental.sellerAgreedDate ? "Agreed" : "Propose"}
-                          </button>
+                          {!isSeller ? (
+                            <>
+                              <input 
+                                type="datetime-local" 
+                                className="flex-1 text-xs p-1 rounded border"
+                                id="return-date-input"
+                              />
+                              <button
+                                onClick={() => {
+                                  const input = document.getElementById('return-date-input') as HTMLInputElement;
+                                  if (input?.value) {
+                                    confirmRentalMutation.mutate({ 
+                                      id: rental.id, 
+                                      confirmedBy: "buyer", 
+                                      type: "date",
+                                      date: input.value
+                                    });
+                                  }
+                                }}
+                                className="px-3 py-1 bg-primary text-primary-foreground rounded text-[10px] font-bold"
+                              >
+                                Propose
+                              </button>
+                            </>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground italic">Waiting for buyer to propose a return date...</p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -265,7 +269,7 @@ export default function ChatDetail() {
                     {rental.status === "pending" && (rental.buyerAgreedDate || rental.sellerAgreedDate) && !rental.buyerStarted && !rental.sellerStarted && (
                        <div className="space-y-2 p-2 bg-emerald-50 rounded-xl border border-emerald-100">
                          <p className="text-xs font-bold text-emerald-700">
-                           Proposed Return: {new Date(rental.returnDate).toLocaleString()}
+                           {rental.buyerAgreedDate ? "Buyer Proposed" : "Seller Agreed"}: {new Date(rental.returnDate).toLocaleString()}
                          </p>
                          <div className="flex gap-2">
                             <button
