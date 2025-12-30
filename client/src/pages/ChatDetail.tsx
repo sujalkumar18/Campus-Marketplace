@@ -48,11 +48,11 @@ export default function ChatDetail() {
   });
 
   const confirmRentalMutation = useMutation({
-    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date", date?: string }) => {
+    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp", date?: string, otp?: string }) => {
       const res = await fetch(`/api/rentals/${data.id}/confirm`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmedBy: data.confirmedBy, type: data.type, date: data.date })
+        body: JSON.stringify({ confirmedBy: data.confirmedBy, type: data.type, date: data.date, otp: data.otp })
       });
       return res.json();
     },
@@ -285,71 +285,119 @@ export default function ChatDetail() {
                     )}
 
                     {/* Start Confirmation */}
-                    {rental.status === "pending" && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Both parties must confirm to start the rental period.</p>
-                        <div className="flex gap-2">
-                          <button
-                            disabled={rental.sellerStarted || !isSeller || confirmRentalMutation.isPending}
-                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "start" })}
-                            className={cn(
-                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
-                              rental.sellerStarted 
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
-                                : "bg-primary text-primary-foreground shadow-sm hover:shadow-md"
-                            )}
-                          >
-                            {rental.sellerStarted ? "Seller: Handed Over" : isSeller ? "Confirm Handover" : "Waiting for Seller"}
-                          </button>
-                          <button
-                            disabled={rental.buyerStarted || isSeller || confirmRentalMutation.isPending}
-                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "start" })}
-                            className={cn(
-                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
-                              rental.buyerStarted 
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
-                                : "bg-primary text-primary-foreground shadow-sm hover:shadow-md"
-                            )}
-                          >
-                            {rental.buyerStarted ? "Buyer: Received" : !isSeller ? "Confirm Receipt" : "Waiting for Buyer"}
-                          </button>
-                        </div>
+                    {rental.status === "pending" && (rental.buyerAgreedDate && rental.sellerAgreedDate) && (
+                      <div className="space-y-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                        <p className="text-xs text-blue-700 font-bold">Step 1: Handover OTP Confirmation</p>
+                        
+                        {isSeller ? (
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">Share this OTP with the buyer during handover:</p>
+                            <div className="bg-white p-3 rounded-lg border border-blue-200 text-center text-xl font-black tracking-widest text-blue-600">
+                              {rental.handoverOtp}
+                            </div>
+                            <button
+                              disabled={rental.sellerStarted || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "start" })}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-xs font-bold transition-all",
+                                rental.sellerStarted ? "bg-emerald-100 text-emerald-700" : "bg-primary text-primary-foreground"
+                              )}
+                            >
+                              {rental.sellerStarted ? "Handover Confirmed" : "Confirm Handover"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">Enter the OTP provided by the seller:</p>
+                            <div className="flex gap-2">
+                              <input 
+                                id="handover-otp-input"
+                                placeholder="4-digit OTP"
+                                className="flex-1 text-xs p-2 rounded border"
+                                maxLength={4}
+                              />
+                              <button
+                                onClick={() => {
+                                  const val = (document.getElementById('handover-otp-input') as HTMLInputElement)?.value;
+                                  if (val) confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "verify_otp", otp: val });
+                                }}
+                                className="px-3 py-2 bg-primary text-primary-foreground rounded text-[10px] font-bold"
+                              >
+                                Verify
+                              </button>
+                            </div>
+                            <button
+                              disabled={rental.buyerStarted || !rental.handoverOtpVerified || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "start" })}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-xs font-bold transition-all",
+                                rental.buyerStarted ? "bg-emerald-100 text-emerald-700" : "bg-primary text-primary-foreground"
+                              )}
+                            >
+                              {rental.buyerStarted ? "Receipt Confirmed" : rental.handoverOtpVerified ? "Finalize Receipt" : "Awaiting OTP Verification"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {/* Return Confirmation */}
                     {rental.status === "active" && (
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">Return by:</span>
-                          <span className="font-bold">{new Date(rental.returnDate).toLocaleDateString()}</span>
+                      <div className="space-y-3 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                        <div className="flex justify-between items-center text-xs mb-1">
+                          <span className="text-amber-700 font-bold">Agreement Return:</span>
+                          <span className="font-bold">{new Date(rental.returnDate).toLocaleString()}</span>
                         </div>
-                        <div className="flex gap-2">
-                          <button
-                            disabled={rental.sellerConfirmed || !isSeller || confirmRentalMutation.isPending}
-                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
-                            className={cn(
-                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
-                              rental.sellerConfirmed 
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
-                                : "bg-blue-600 text-white shadow-sm hover:shadow-md"
-                            )}
-                          >
-                            {rental.sellerConfirmed ? "Seller: Confirmed" : isSeller ? "Confirm Return" : "Waiting for Seller"}
-                          </button>
-                          <button
-                            disabled={rental.buyerConfirmed || isSeller || confirmRentalMutation.isPending}
-                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
-                            className={cn(
-                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
-                              rental.buyerConfirmed 
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
-                                : "bg-blue-600 text-white shadow-sm hover:shadow-md"
-                            )}
-                          >
-                            {rental.buyerConfirmed ? "Buyer: Confirmed" : !isSeller ? "Return Completed" : "Waiting for Buyer"}
-                          </button>
-                        </div>
+
+                        {isSeller ? (
+                           <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground font-medium">Verify buyer's return OTP:</p>
+                            <div className="flex gap-2">
+                              <input 
+                                id="return-otp-input"
+                                placeholder="4-digit OTP"
+                                className="flex-1 text-xs p-2 rounded border"
+                                maxLength={4}
+                              />
+                              <button
+                                onClick={() => {
+                                  const val = (document.getElementById('return-otp-input') as HTMLInputElement)?.value;
+                                  if (val) confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "verify_otp", otp: val });
+                                }}
+                                className="px-3 py-2 bg-primary text-primary-foreground rounded text-[10px] font-bold"
+                              >
+                                Verify
+                              </button>
+                            </div>
+                            <button
+                              disabled={rental.sellerConfirmed || !rental.returnOtpVerified || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-xs font-bold transition-all",
+                                rental.sellerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
+                              )}
+                            >
+                              {rental.sellerConfirmed ? "Return Confirmed" : rental.returnOtpVerified ? "Finalize Return" : "Verify OTP First"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">Show this OTP to seller during return:</p>
+                            <div className="bg-white p-3 rounded-lg border border-amber-200 text-center text-xl font-black tracking-widest text-amber-600">
+                              {rental.returnOtp}
+                            </div>
+                            <button
+                              disabled={rental.buyerConfirmed || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-xs font-bold transition-all",
+                                rental.buyerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
+                              )}
+                            >
+                              {rental.buyerConfirmed ? "Return Completed" : "Confirm Return Sent"}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

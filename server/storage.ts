@@ -135,7 +135,7 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date", date?: string): Promise<RentalReturn> {
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp", date?: string, otp?: string): Promise<RentalReturn> {
     const update: any = {};
     if (type === "start") {
       update[confirmedBy === "buyer" ? "buyerStarted" : "sellerStarted"] = true;
@@ -144,6 +144,13 @@ export class DatabaseStorage implements IStorage {
     } else if (type === "date") {
       update[confirmedBy === "buyer" ? "buyerAgreedDate" : "sellerAgreedDate"] = true;
       if (date) update.returnDate = new Date(date);
+    } else if (type === "verify_otp") {
+      const [current] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
+      if (current.status === "pending" && current.handoverOtp === otp) {
+        update.handoverOtpVerified = true;
+      } else if (current.status === "active" && current.returnOtp === otp) {
+        update.returnOtpVerified = true;
+      }
     }
 
     const [rental] = await db.update(rentalReturns)
@@ -152,9 +159,9 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     // Auto-update overall status
-    if (rental.buyerStarted && rental.sellerStarted && rental.status === "pending") {
+    if (rental.buyerStarted && rental.sellerStarted && rental.handoverOtpVerified && rental.status === "pending") {
       await db.update(rentalReturns).set({ status: "active" }).where(eq(rentalReturns.id, id));
-    } else if (rental.buyerConfirmed && rental.sellerConfirmed && rental.status === "active") {
+    } else if (rental.buyerConfirmed && rental.sellerConfirmed && rental.returnOtpVerified && rental.status === "active") {
       await db.update(rentalReturns).set({ status: "completed" }).where(eq(rentalReturns.id, id));
     }
 

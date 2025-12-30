@@ -187,21 +187,6 @@ export default function ListingDetail() {
             </span>
           </div>
 
-          {listing.type === "rent" && (
-            <div>
-              <p className="text-sm text-muted-foreground mb-3 font-semibold">Rental Return Date</p>
-              <input
-                type="date"
-                value={returnDate}
-                onChange={(e) => setReturnDate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-border bg-white focus:ring-2 focus:ring-primary/20"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                Both you and seller must confirm return. Late returns: ₹500 penalty
-              </p>
-            </div>
-          )}
-
           <div>
             <p className="text-sm text-muted-foreground mb-2">Type</p>
             <span

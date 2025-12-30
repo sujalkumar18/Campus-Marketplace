@@ -151,13 +151,25 @@ export async function registerRoutes(
   });
 
   app.post("/api/rentals", async (req, res) => {
-    const rental = await storage.createRentalReturn(req.body);
+    const { chatId, listingId, returnDate } = req.body;
+    // Generate simple 4-digit OTPs for handover and return
+    const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    const returnOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    const rental = await storage.createRentalReturn({
+      chatId,
+      listingId,
+      returnDate: new Date(returnDate),
+      handoverOtp,
+      returnOtp,
+      status: "pending"
+    });
     res.status(201).json(rental);
   });
 
   app.patch("/api/rentals/:id/confirm", async (req, res) => {
-    const { confirmedBy, type } = req.body;
-    const rental = await storage.confirmRentalReturn(Number(req.params.id), confirmedBy, type);
+    const { confirmedBy, type, date, otp } = req.body;
+    const rental = await storage.confirmRentalReturn(Number(req.params.id), confirmedBy, type, date, otp);
     res.json(rental);
   });
   app.post("/api/purchase", async (req, res) => {
