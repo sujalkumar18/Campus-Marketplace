@@ -232,23 +232,30 @@ export default function ChatDetail() {
                       <div className="space-y-2">
                         <p className="text-xs text-muted-foreground">Both parties must confirm to start the rental period.</p>
                         <div className="flex gap-2">
-                          {isSeller ? (
-                            <button
-                              disabled={rental.sellerStarted || confirmRentalMutation.isPending}
-                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "start" })}
-                              className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold disabled:opacity-50"
-                            >
-                              {rental.sellerStarted ? "Awaiting Buyer" : "Confirm Handover"}
-                            </button>
-                          ) : (
-                            <button
-                              disabled={rental.buyerStarted || confirmRentalMutation.isPending}
-                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "start" })}
-                              className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold disabled:opacity-50"
-                            >
-                              {rental.buyerStarted ? "Awaiting Seller" : "Confirm Receipt"}
-                            </button>
-                          )}
+                          <button
+                            disabled={rental.sellerStarted || !isSeller || confirmRentalMutation.isPending}
+                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "start" })}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                              rental.sellerStarted 
+                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                                : "bg-primary text-primary-foreground shadow-sm hover:shadow-md"
+                            )}
+                          >
+                            {rental.sellerStarted ? "Seller: Handed Over" : isSeller ? "Confirm Handover" : "Waiting for Seller"}
+                          </button>
+                          <button
+                            disabled={rental.buyerStarted || isSeller || confirmRentalMutation.isPending}
+                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "start" })}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                              rental.buyerStarted 
+                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                                : "bg-primary text-primary-foreground shadow-sm hover:shadow-md"
+                            )}
+                          >
+                            {rental.buyerStarted ? "Buyer: Received" : !isSeller ? "Confirm Receipt" : "Waiting for Buyer"}
+                          </button>
                         </div>
                       </div>
                     )}
@@ -261,23 +268,30 @@ export default function ChatDetail() {
                           <span className="font-bold">{new Date(rental.returnDate).toLocaleDateString()}</span>
                         </div>
                         <div className="flex gap-2">
-                          {isSeller ? (
-                            <button
-                              disabled={rental.sellerConfirmed || confirmRentalMutation.isPending}
-                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
-                              className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-50"
-                            >
-                              {rental.sellerConfirmed ? "Awaiting Buyer" : "Confirm Return"}
-                            </button>
-                          ) : (
-                            <button
-                              disabled={rental.buyerConfirmed || confirmRentalMutation.isPending}
-                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
-                              className="flex-1 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold disabled:opacity-50"
-                            >
-                              {rental.buyerConfirmed ? "Awaiting Seller" : "Return Completed"}
-                            </button>
-                          )}
+                          <button
+                            disabled={rental.sellerConfirmed || !isSeller || confirmRentalMutation.isPending}
+                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                              rental.sellerConfirmed 
+                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                                : "bg-blue-600 text-white shadow-sm hover:shadow-md"
+                            )}
+                          >
+                            {rental.sellerConfirmed ? "Seller: Confirmed" : isSeller ? "Confirm Return" : "Waiting for Seller"}
+                          </button>
+                          <button
+                            disabled={rental.buyerConfirmed || isSeller || confirmRentalMutation.isPending}
+                            onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
+                            className={cn(
+                              "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                              rental.buyerConfirmed 
+                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                                : "bg-blue-600 text-white shadow-sm hover:shadow-md"
+                            )}
+                          >
+                            {rental.buyerConfirmed ? "Buyer: Confirmed" : !isSeller ? "Return Completed" : "Waiting for Buyer"}
+                          </button>
                         </div>
                       </div>
                     )}
