@@ -3,6 +3,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { CategoryPill } from "@/components/CategoryPill";
 import { ListingCard } from "@/components/ListingCard";
 import { useListings } from "@/hooks/use-listings";
+import { useChats, useCreateChat } from "@/hooks/use-chats";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Loader2 } from "lucide-react";
