@@ -280,9 +280,26 @@ export default function ChatDetail() {
                                 type: "date",
                                 date: rental.returnDate
                               })}
-                              className="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold disabled:opacity-50"
+                              className="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold disabled:opacity-50 shadow-sm"
                             >
                               {(isSeller && rental.sellerAgreedDate) || (!isSeller && rental.buyerAgreedDate) ? "Waiting for Other" : "Agree to Date"}
+                            </button>
+                            
+                            {/* Reject Option */}
+                            <button
+                              disabled={confirmRentalMutation.isPending}
+                              onClick={() => {
+                                if (confirm("Are you sure you want to reject this return date? You'll need to propose a new one.")) {
+                                  confirmRentalMutation.mutate({ 
+                                    id: rental.id, 
+                                    confirmedBy: isSeller ? "seller" : "buyer", 
+                                    type: "reject_date"
+                                  });
+                                }
+                              }}
+                              className="px-3 py-1.5 bg-destructive/10 text-destructive rounded-lg text-[10px] font-bold hover:bg-destructive/20 transition-colors shadow-sm"
+                            >
+                              Not Agreed
                             </button>
                          </div>
                        </div>

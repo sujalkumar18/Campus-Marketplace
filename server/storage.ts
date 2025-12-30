@@ -26,7 +26,7 @@ export interface IStorage {
   // Rental Returns
   getRentalReturn(chatId: number): Promise<RentalReturn | undefined>;
   createRentalReturn(rental: InsertRentalReturn): Promise<RentalReturn>;
-  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date", date?: string): Promise<RentalReturn>;
+  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string): Promise<RentalReturn>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -144,6 +144,10 @@ export class DatabaseStorage implements IStorage {
     } else if (type === "date") {
       update[confirmedBy === "buyer" ? "buyerAgreedDate" : "sellerAgreedDate"] = true;
       if (date) update.returnDate = new Date(date);
+    } else if (type === "reject_date") {
+      update.buyerAgreedDate = false;
+      update.sellerAgreedDate = false;
+      // Optionally reset returnDate if needed, but keeping the last proposed date can be useful for reference
     } else if (type === "verify_otp") {
       const [current] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
       if (current.status === "pending" && current.handoverOtp === otp) {
