@@ -26,7 +26,7 @@ export interface IStorage {
   // Rental Returns
   getRentalReturn(chatId: number): Promise<RentalReturn | undefined>;
   createRentalReturn(rental: InsertRentalReturn): Promise<RentalReturn>;
-  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end"): Promise<RentalReturn>;
+  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date", date?: string): Promise<RentalReturn>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -135,12 +135,15 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end"): Promise<RentalReturn> {
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date", date?: string): Promise<RentalReturn> {
     const update: any = {};
     if (type === "start") {
       update[confirmedBy === "buyer" ? "buyerStarted" : "sellerStarted"] = true;
-    } else {
+    } else if (type === "end") {
       update[confirmedBy === "buyer" ? "buyerConfirmed" : "sellerConfirmed"] = true;
+    } else if (type === "date") {
+      update[confirmedBy === "buyer" ? "buyerAgreedDate" : "sellerAgreedDate"] = true;
+      if (date) update.returnDate = new Date(date);
     }
 
     const [rental] = await db.update(rentalReturns)

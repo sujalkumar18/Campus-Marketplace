@@ -2,10 +2,12 @@ import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
 import { CategoryPill } from "@/components/CategoryPill";
 import { ListingCard } from "@/components/ListingCard";
-import { useListings, useCreateListing } from "@/hooks/use-listings";
-import { useChats, useCreateChat } from "@/hooks/use-chats";
+import { useListings } from "@/hooks/use-listings";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { Search, Loader2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { Listing } from "@shared/schema";
 
 const CATEGORIES = ["All", "Books", "Notes", "Calculators", "Lab Equipment", "Other Items"];
 
@@ -13,6 +15,8 @@ export default function Home() {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   const { data: listings, isLoading } = useListings({
     category: activeCategory === "All" ? undefined : activeCategory,
@@ -28,8 +32,16 @@ export default function Home() {
 
   const { mutate: createChat } = useCreateChat();
 
-  const handleListingClick = (listingId: number) => {
-    setLocation(`/listing/${listingId}`);
+  const handleListingClick = (listing: Listing) => {
+    if (user && listing.sellerId === user.id) {
+      toast({
+        title: "Your Listing",
+        description: "You cannot message yourself for your own item.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setLocation(`/listing/${listing.id}`);
   };
 
   return (
@@ -101,7 +113,7 @@ export default function Home() {
                   <ListingCard
                     key={listing.id}
                     listing={listing}
-                    onClick={() => handleListingClick(listing.id)}
+                    onClick={() => handleListingClick(listing)}
                   />
                 ))}
               </div>

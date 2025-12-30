@@ -48,11 +48,11 @@ export default function ChatDetail() {
   });
 
   const confirmRentalMutation = useMutation({
-    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" }) => {
+    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date", date?: string }) => {
       const res = await fetch(`/api/rentals/${data.id}/confirm`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmedBy: data.confirmedBy, type: data.type })
+        body: JSON.stringify({ confirmedBy: data.confirmedBy, type: data.type, date: data.date })
       });
       return res.json();
     },
@@ -227,6 +227,63 @@ export default function ChatDetail() {
                   </div>
 
                   <div className="space-y-3">
+                    {/* Return Date Agreement */}
+                    {rental.status === "pending" && !rental.buyerAgreedDate && !rental.sellerAgreedDate && (
+                      <div className="space-y-2 p-2 bg-primary/5 rounded-xl border border-primary/10">
+                        <p className="text-xs font-bold text-primary flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          Agree on Return Timing
+                        </p>
+                        <div className="flex gap-2">
+                          <input 
+                            type="datetime-local" 
+                            className="flex-1 text-xs p-1 rounded border"
+                            id="return-date-input"
+                            disabled={rental.sellerAgreedDate || !isSeller}
+                          />
+                          <button
+                            disabled={rental.sellerAgreedDate || !isSeller || confirmRentalMutation.isPending}
+                            onClick={() => {
+                              const input = document.getElementById('return-date-input') as HTMLInputElement;
+                              if (input?.value) {
+                                confirmRentalMutation.mutate({ 
+                                  id: rental.id, 
+                                  confirmedBy: "seller", 
+                                  type: "date",
+                                  date: input.value
+                                });
+                              }
+                            }}
+                            className="px-3 py-1 bg-primary text-primary-foreground rounded text-[10px] font-bold disabled:opacity-50"
+                          >
+                            {rental.sellerAgreedDate ? "Agreed" : "Propose"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {rental.status === "pending" && (rental.buyerAgreedDate || rental.sellerAgreedDate) && !rental.buyerStarted && !rental.sellerStarted && (
+                       <div className="space-y-2 p-2 bg-emerald-50 rounded-xl border border-emerald-100">
+                         <p className="text-xs font-bold text-emerald-700">
+                           Proposed Return: {new Date(rental.returnDate).toLocaleString()}
+                         </p>
+                         <div className="flex gap-2">
+                            <button
+                              disabled={(isSeller && rental.sellerAgreedDate) || (!isSeller && rental.buyerAgreedDate) || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ 
+                                id: rental.id, 
+                                confirmedBy: isSeller ? "seller" : "buyer", 
+                                type: "date",
+                                date: rental.returnDate
+                              })}
+                              className="flex-1 py-1.5 bg-emerald-600 text-white rounded-lg text-[10px] font-bold disabled:opacity-50"
+                            >
+                              {(isSeller && rental.sellerAgreedDate) || (!isSeller && rental.buyerAgreedDate) ? "Waiting for Other" : "Agree to Date"}
+                            </button>
+                         </div>
+                       </div>
+                    )}
+
                     {/* Start Confirmation */}
                     {rental.status === "pending" && (
                       <div className="space-y-2">
