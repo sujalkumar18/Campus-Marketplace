@@ -147,9 +147,9 @@ export class DatabaseStorage implements IStorage {
     } else if (type === "reject_date") {
       if (confirmedBy === "seller") {
         update.buyerAgreedDate = false;
-        update.sellerAgreedDate = true; // Seller marks their own agreement to the new date
+        update.sellerAgreedDate = true;
       } else {
-        update.buyerAgreedDate = true; // Buyer marks their own agreement
+        update.buyerAgreedDate = true;
         update.sellerAgreedDate = false;
       }
       if (date) update.returnDate = new Date(date);

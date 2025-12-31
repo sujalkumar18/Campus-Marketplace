@@ -50,7 +50,7 @@ export default function ChatDetail() {
   });
 
   const confirmRentalMutation = useMutation({
-    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp", date?: string, otp?: string }) => {
+    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string }) => {
       const res = await fetch(`/api/rentals/${data.id}/confirm`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -392,45 +392,43 @@ export default function ChatDetail() {
                                     className="flex-1 text-xs p-2 rounded border"
                                     maxLength={4}
                                   />
-                                  <button
-                                    onClick={() => {
-                                      const val = (document.getElementById('return-otp-input') as HTMLInputElement)?.value;
-                                      if (val) confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "verify_otp", otp: val });
-                                    }}
-                                    className="px-3 py-2 bg-primary text-primary-foreground rounded text-[10px] font-bold"
-                                  >
-                                    Verify
-                                  </button>
-                                </div>
-                                <button
-                                  disabled={rental.sellerConfirmed || !rental.returnOtpVerified || confirmRentalMutation.isPending}
-                                  onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
-                                  className={cn(
-                                    "w-full py-2 rounded-lg text-xs font-bold transition-all",
-                                    rental.sellerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
-                                  )}
-                                >
-                                  {rental.sellerConfirmed ? "Return Confirmed" : rental.returnOtpVerified ? "Finalize Return" : "Verify OTP First"}
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="space-y-2">
-                                <p className="text-xs text-muted-foreground">Show this OTP to seller during return:</p>
-                                <div className="bg-white p-3 rounded-lg border border-amber-200 text-center text-xl font-black tracking-widest text-amber-600">
-                                  {rental.returnOtp}
-                                </div>
-                                <button
-                                  disabled={rental.buyerConfirmed || confirmRentalMutation.isPending}
-                                  onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
-                                  className={cn(
-                                    "w-full py-2 rounded-lg text-xs font-bold transition-all",
-                                    rental.buyerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
-                                  )}
-                                >
-                                  {rental.buyerConfirmed ? "Return Completed" : "Confirm Return Sent"}
-                                </button>
-                              </div>
-                            )}
+                            <button
+                                onClick={() => {
+                                  const val = (document.getElementById('return-otp-input') as HTMLInputElement)?.value;
+                                  if (val) confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "verify_otp", otp: val });
+                                }}
+                                className="px-3 py-2 bg-primary text-primary-foreground rounded text-[10px] font-bold"
+                              >
+                                Verify
+                              </button>
+                            </div>
+                            <button
+                              disabled={rental.sellerConfirmed || !rental.returnOtpVerified || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-xs font-bold transition-all",
+                                rental.sellerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
+                              )}
+                            >
+                              {rental.sellerConfirmed ? "Return Confirmed" : rental.returnOtpVerified ? "Finalize Return" : "Verify OTP First"}
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-xs text-muted-foreground">Show this OTP to seller during return:</p>
+                            <div className="bg-white p-3 rounded-lg border border-amber-200 text-center text-xl font-black tracking-widest text-amber-600">
+                              {rental.returnOtp}
+                            </div>
+                            <button
+                              disabled={rental.buyerConfirmed || confirmRentalMutation.isPending}
+                              onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
+                              className={cn(
+                                "w-full py-2 rounded-lg text-xs font-bold transition-all",
+                                rental.buyerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
+                              )}
+                            >
+                              {rental.buyerConfirmed ? "Return Completed" : "Confirm Return Sent"}
+                            </button>
                           </div>
                         )}
                       </div>
