@@ -145,9 +145,14 @@ export class DatabaseStorage implements IStorage {
       update[confirmedBy === "buyer" ? "buyerAgreedDate" : "sellerAgreedDate"] = true;
       if (date) update.returnDate = new Date(date);
     } else if (type === "reject_date") {
-      update.buyerAgreedDate = false;
-      update.sellerAgreedDate = false;
-      // Optionally reset returnDate if needed, but keeping the last proposed date can be useful for reference
+      if (confirmedBy === "seller") {
+        update.buyerAgreedDate = false;
+        update.sellerAgreedDate = true; // Seller marks their own agreement to the new date
+      } else {
+        update.buyerAgreedDate = true; // Buyer marks their own agreement
+        update.sellerAgreedDate = false;
+      }
+      if (date) update.returnDate = new Date(date);
     } else if (type === "verify_otp") {
       const [current] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
       if (current.status === "pending" && current.handoverOtp === otp) {

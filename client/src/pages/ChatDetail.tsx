@@ -289,11 +289,13 @@ export default function ChatDetail() {
                             <button
                               disabled={confirmRentalMutation.isPending}
                               onClick={() => {
-                                if (confirm("Are you sure you want to reject this return date? You'll need to propose a new one.")) {
+                                const newDate = prompt("Please propose a new return date (YYYY-MM-DDTHH:mm):", rental.returnDate);
+                                if (newDate) {
                                   confirmRentalMutation.mutate({ 
                                     id: rental.id, 
                                     confirmedBy: isSeller ? "seller" : "buyer", 
-                                    type: "reject_date"
+                                    type: "reject_date",
+                                    date: newDate
                                   });
                                 }
                               }}
