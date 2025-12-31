@@ -71,8 +71,19 @@ export async function registerRoutes(
     // Expect userId in query for MVP simplicity
     const userId = Number(req.query.userId);
     if (!userId) return res.status(400).json({ message: "userId required" });
-    const chats = await storage.getChats(userId);
-    res.json(chats);
+    const allChats = await storage.getChats(userId);
+    // Sort chats by the timestamp of their last message
+    const sortedChats = await Promise.all(allChats.map(async (chat) => {
+      const messages = await storage.getMessages(chat.id);
+      const lastMessage = messages[messages.length - 1];
+      return {
+        ...chat,
+        lastMessageAt: lastMessage?.createdAt || chat.createdAt
+      };
+    }));
+
+    sortedChats.sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+    res.json(sortedChats);
   });
 
   app.post(api.chats.create.path, async (req, res) => {
