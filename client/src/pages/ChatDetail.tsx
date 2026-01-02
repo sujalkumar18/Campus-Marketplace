@@ -258,8 +258,7 @@ export default function ChatDetail() {
                     {isLastMessage && rental && (
                       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-2">
                         <div className="space-y-3">
-                          <button 
-                            onClick={() => setShowRentalDetails(!showRentalDetails)}
+                          <div
                             className={cn(
                               "w-full flex items-center justify-between p-3 rounded-2xl border transition-all shadow-sm",
                               rental.status === "pending" ? "bg-amber-50 border-amber-100 text-amber-700" :
@@ -271,17 +270,10 @@ export default function ChatDetail() {
                               <Calendar className="w-4 h-4" />
                               <span className="font-bold text-sm">Rental Tracking: {rental.status.toUpperCase()}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-medium opacity-70">
-                                {showRentalDetails ? "Hide Details" : "Show Details"}
-                              </span>
-                              {showRentalDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                            </div>
-                          </button>
+                          </div>
 
-                          {showRentalDetails && (
-                            <div className="bg-muted/50 rounded-2xl p-4 border border-border/50">
-                              <div className="space-y-3">
+                          <div className="bg-muted/50 rounded-2xl p-4 border border-border/50">
+                            <div className="space-y-3">
                                 {rental.status === "pending" && !rental.buyerAgreedDate && !rental.sellerAgreedDate && (
                                   <div className="space-y-2 p-2 bg-primary/5 rounded-xl border border-primary/10">
                                     <p className="text-xs font-bold text-primary flex items-center gap-1">
