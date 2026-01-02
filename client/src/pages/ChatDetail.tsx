@@ -432,15 +432,21 @@ export default function ChatDetail() {
                                           {rental.returnOtp}
                                         </div>
                                         <button
-                                          disabled={rental.buyerConfirmed || confirmRentalMutation.isPending}
+                                          disabled={rental.buyerConfirmed || !rental.returnOtpVerified || confirmRentalMutation.isPending}
                                           onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
                                           className={cn(
                                             "w-full py-2 rounded-lg text-xs font-bold transition-all",
-                                            rental.buyerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
+                                            rental.buyerConfirmed ? "bg-emerald-100 text-emerald-700" : 
+                                            rental.returnOtpVerified ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground cursor-not-allowed"
                                           )}
                                         >
-                                          {rental.buyerConfirmed ? "Return Completed" : "Confirm Return Sent"}
+                                          {rental.buyerConfirmed ? "Campus Return Completed" : "Campus Return"}
                                         </button>
+                                        {!rental.returnOtpVerified && (
+                                          <p className="text-[10px] text-center text-muted-foreground italic">
+                                            "Campus Return" will be available after seller verifies your OTP.
+                                          </p>
+                                        )}
                                       </div>
                                     )}
                                   </div>
