@@ -80,6 +80,8 @@ export default function ChatDetail() {
         })
       });
       refetchRental();
+      // Auto-expand rental details when a rental is started
+      setShowRentalDetails(true);
     }
 
     const statusText = newStatus === "sold" ? "marked as sold" : 
