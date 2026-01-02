@@ -134,7 +134,7 @@ export default function ChatDetail() {
           </div>
           
           <div className="flex items-center gap-1">
-            {isSeller && listing?.status === "available" && (
+            {isSeller && (
               <button 
                 onClick={() => setShowStatusModal(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-full text-xs font-bold hover:bg-primary/20 transition-colors"
@@ -159,10 +159,28 @@ export default function ChatDetail() {
                 <p className="text-sm text-muted-foreground">Select an action for this item</p>
               </div>
               <div className="grid gap-3">
+                {listing?.status !== "available" && (
+                  <button 
+                    onClick={() => handleStatusUpdate("available")}
+                    className="flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl transition-colors border border-emerald-100"
+                  >
+                    <div className="text-left">
+                      <p className="font-bold">Mark as Available</p>
+                      <p className="text-xs opacity-80">Put this item back on the market</p>
+                    </div>
+                    <CheckCircle2 className="w-6 h-6" />
+                  </button>
+                )}
                 {listing?.type === "sell" ? (
                   <button 
                     onClick={() => handleStatusUpdate("sold")}
-                    className="flex items-center justify-between p-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-2xl transition-colors border border-emerald-100"
+                    disabled={listing?.status === "sold"}
+                    className={cn(
+                      "flex items-center justify-between p-4 rounded-2xl transition-colors border",
+                      listing?.status === "sold" 
+                        ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed border-transparent"
+                        : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-100"
+                    )}
                   >
                     <div className="text-left">
                       <p className="font-bold">Mark as Sold</p>
@@ -173,7 +191,13 @@ export default function ChatDetail() {
                 ) : (
                   <button 
                     onClick={() => handleStatusUpdate("rented")}
-                    className="flex items-center justify-between p-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-2xl transition-colors border border-blue-100"
+                    disabled={listing?.status === "rented"}
+                    className={cn(
+                      "flex items-center justify-between p-4 rounded-2xl transition-colors border",
+                      listing?.status === "rented"
+                        ? "bg-muted text-muted-foreground opacity-50 cursor-not-allowed border-transparent"
+                        : "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-100"
+                    )}
                   >
                     <div className="text-left">
                       <p className="font-bold">Mark as Rented</p>
