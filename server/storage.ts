@@ -27,6 +27,7 @@ export interface IStorage {
   getRentalReturn(chatId: number): Promise<RentalReturn | undefined>;
   createRentalReturn(rental: InsertRentalReturn): Promise<RentalReturn>;
   confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string): Promise<RentalReturn>;
+  markMessagesAsRead(chatId: number, userId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -135,46 +136,14 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp", date?: string, otp?: string): Promise<RentalReturn> {
-    const update: any = {};
-    if (type === "start") {
-      update[confirmedBy === "buyer" ? "buyerStarted" : "sellerStarted"] = true;
-    } else if (type === "end") {
-      update[confirmedBy === "buyer" ? "buyerConfirmed" : "sellerConfirmed"] = true;
-    } else if (type === "date") {
-      update[confirmedBy === "buyer" ? "buyerAgreedDate" : "sellerAgreedDate"] = true;
-      if (date) update.returnDate = new Date(date);
-    } else if (type === ("reject_date" as any)) {
-      if (confirmedBy === "seller") {
-        update.buyerAgreedDate = false;
-        update.sellerAgreedDate = true;
-      } else {
-        update.buyerAgreedDate = true;
-        update.sellerAgreedDate = false;
-      }
-      if (date) update.returnDate = new Date(date);
-    } else if (type === "verify_otp") {
-      const [current] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
-      if (current.status === "pending" && current.handoverOtp === otp) {
-        update.handoverOtpVerified = true;
-      } else if (current.status === "active" && current.returnOtp === otp) {
-        update.returnOtpVerified = true;
-      }
-    }
-
-    const [rental] = await db.update(rentalReturns)
-      .set(update)
-      .where(eq(rentalReturns.id, id))
-      .returning();
+  async markMessagesAsRead(chatId: number, userId: number): Promise<void> {
+    const [chat] = await db.select().from(chats).where(eq(chats.id, chatId));
+    if (!chat) return;
+    const otherUserId = chat.buyerId === userId ? chat.sellerId : chat.buyerId;
     
-    // Auto-update overall status
-    if (rental.buyerStarted && rental.sellerStarted && rental.handoverOtpVerified && rental.status === "pending") {
-      await db.update(rentalReturns).set({ status: "active" }).where(eq(rentalReturns.id, id));
-    } else if (rental.buyerConfirmed && rental.sellerConfirmed && rental.returnOtpVerified && rental.status === "active") {
-      await db.update(rentalReturns).set({ status: "completed" }).where(eq(rentalReturns.id, id));
-    }
-
-    return rental;
+    await db.update(messages)
+      .set({ read: true })
+      .where(and(eq(messages.chatId, chatId), eq(messages.senderId, otherUserId)));
   }
 }
 

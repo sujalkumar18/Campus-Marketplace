@@ -32,6 +32,17 @@ export default function ChatDetail() {
   const { mutate: sendMessage, isPending: isSending } = useSendMessage();
   const { mutate: updateListing } = useUpdateListing();
 
+  // Mark messages as read when entering chat
+  useEffect(() => {
+    if (chatId && user?.id) {
+      fetch(`/api/chats/${chatId}/read`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id })
+      });
+    }
+  }, [chatId, user?.id, messages]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;

@@ -72,22 +72,31 @@ export async function registerRoutes(
     const userId = Number(req.query.userId);
     if (!userId) return res.status(400).json({ message: "userId required" });
     const allChats = await storage.getChats(userId);
-    // Sort chats by the timestamp of their last message
-    const sortedChats = await Promise.all(allChats.map(async (chat) => {
-      const messages = await storage.getMessages(chat.id);
-      const lastMessage = messages[messages.length - 1];
+    
+    const chatsWithDetails = await Promise.all(allChats.map(async (chat) => {
+      const otherUserId = chat.buyerId === userId ? chat.sellerId : chat.buyerId;
+      const otherUser = await storage.getUser(otherUserId);
+      const listing = await storage.getListing(chat.listingId);
+      const chatMessages = await storage.getMessages(chat.id);
+      const lastMessage = chatMessages[chatMessages.length - 1] || null;
+      
       return {
         ...chat,
-        lastMessageAt: lastMessage?.createdAt || chat.createdAt
+        otherUser,
+        listing,
+        lastMessage,
+        lastMessageAt: lastMessage?.createdAt || chat.createdAt,
+        unreadCount: chatMessages.filter(m => m.senderId !== userId && !m.read).length
       };
     }));
 
-    sortedChats.sort((a, b) => {
+    chatsWithDetails.sort((a, b) => {
       const timeA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
       const timeB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
       return timeB - timeA;
     });
-    res.json(sortedChats);
+
+    res.json(chatsWithDetails);
   });
 
   app.post(api.chats.create.path, async (req, res) => {
@@ -148,6 +157,15 @@ export async function registerRoutes(
       console.error("Error sending message:", err);
       res.status(500).json({ message: "Error sending message" });
     }
+  });
+
+  app.post("/api/chats/:id/read", async (req, res) => {
+    const chatId = Number(req.params.id);
+    const { userId } = req.body;
+    if (!chatId || !userId) return res.status(400).json({ message: "chatId and userId required" });
+    
+    await storage.markMessagesAsRead(chatId, Number(userId));
+    res.json({ success: true });
   });
 
   // File Upload Endpoint (Images, PDFs, Videos)

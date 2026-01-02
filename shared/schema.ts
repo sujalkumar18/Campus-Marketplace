@@ -46,6 +46,7 @@ export const messages = pgTable("messages", {
   chatId: integer("chat_id").notNull(),
   senderId: integer("sender_id").notNull(),
   content: text("content").notNull(),
+  read: boolean("read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
