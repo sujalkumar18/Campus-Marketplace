@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useChatMessages, useSendMessage, useChats, useCreateChat } from "@/hooks/use-chats";
 import { useUpdateListing } from "@/hooks/use-listings";
-import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, History, Calendar, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
@@ -21,7 +21,6 @@ export default function ChatDetail() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [inputText, setInputText] = useState("");
   const [showStatusModal, setShowStatusModal] = useState(false);
-  const [showRentalDetails, setShowRentalDetails] = useState(false);
   
   const { data: chats } = useChats();
   const { mutate: createChatMutation } = useCreateChat();
@@ -80,8 +79,6 @@ export default function ChatDetail() {
         })
       });
       refetchRental();
-      // Auto-expand rental details when a rental is started
-      setShowRentalDetails(true);
     }
 
     const statusText = newStatus === "sold" ? "marked as sold" : 
@@ -471,7 +468,6 @@ export default function ChatDetail() {
                                 )}
                               </div>
                             </div>
-                          )}
                         </div>
                       </div>
                     )}
