@@ -293,19 +293,12 @@ export default function ChatDetail() {
                     {isLastMessage && listing?.status === "sold" && (
                       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-2">
                         <div className="space-y-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                          <p className="text-xs text-emerald-700 font-bold">Delivery OTP Verification</p>
+                          <p className="text-xs text-emerald-700 font-bold">Delivery Confirmation</p>
                           {rental?.deliveryOtpVerified ? (
                             <p className="text-xs text-emerald-600 font-medium italic">✓ Delivery confirmed successfully</p>
                           ) : isSeller ? (
-                            <div className="space-y-2 text-center">
-                              <p className="text-xs text-muted-foreground">Share this OTP with the buyer during delivery:</p>
-                              <div className="bg-white p-3 rounded-lg border border-emerald-200 text-xl font-black tracking-widest text-emerald-600">
-                                {rental?.deliveryOtp}
-                              </div>
-                            </div>
-                          ) : (
                             <div className="space-y-2">
-                              <p className="text-xs text-muted-foreground">Enter the delivery OTP provided by the seller:</p>
+                              <p className="text-xs text-muted-foreground">Enter the OTP provided by the buyer to confirm delivery:</p>
                               <div className="flex gap-2">
                                 <input 
                                   id="delivery-otp-input"
@@ -316,12 +309,19 @@ export default function ChatDetail() {
                                 <button
                                   onClick={() => {
                                     const val = (document.getElementById('delivery-otp-input') as HTMLInputElement)?.value;
-                                    if (val) confirmRentalMutation.mutate({ id: rental?.id!, confirmedBy: "buyer", type: "verify_delivery_otp", otp: val });
+                                    if (val) confirmRentalMutation.mutate({ id: rental?.id!, confirmedBy: "seller", type: "verify_delivery_otp", otp: val });
                                   }}
                                   className="px-3 py-2 bg-emerald-600 text-white rounded text-[10px] font-bold"
                                 >
-                                  Verify Delivery
+                                  Confirm Delivery
                                 </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2 text-center">
+                              <p className="text-xs text-muted-foreground">Share this OTP with the seller during delivery:</p>
+                              <div className="bg-white p-3 rounded-lg border border-emerald-200 text-xl font-black tracking-widest text-emerald-600">
+                                {rental?.deliveryOtp}
                               </div>
                             </div>
                           )}
