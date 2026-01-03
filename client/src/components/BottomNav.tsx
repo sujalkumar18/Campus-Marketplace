@@ -7,12 +7,12 @@ export function BottomNav() {
   const [location] = useLocation();
   const { data: chats } = useChats();
 
-  const unreadChatsCount = chats?.filter(chat => chat.unreadCount > 0).length || 0;
+  const unreadTotal = chats?.reduce((acc, chat) => acc + (chat.unreadCount || 0), 0) || 0;
 
   const navItems = [
     { href: "/home", icon: Home, label: "Home" },
     { href: "/sell", icon: PlusCircle, label: "Sell" },
-    { href: "/chats", icon: MessageCircle, label: "Chat", badge: unreadChatsCount },
+    { href: "/chats", icon: MessageCircle, label: "Chat", badge: unreadTotal },
     { href: "/profile", icon: User, label: "Profile" },
   ];
 

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { BottomNav } from "@/components/BottomNav";
 import { useChats } from "@/hooks/use-chats";
@@ -8,7 +9,14 @@ import { cn } from "@/lib/utils";
 
 export default function Chats() {
   const { user } = useAuth();
-  const { data: chats, isLoading } = useChats();
+  const { data: chats, isLoading, refetch } = useChats();
+
+  // Refetch chats when the page gains focus to ensure unread counts are fresh
+  useEffect(() => {
+    const handleFocus = () => refetch();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [refetch]);
 
   const filteredChats = chats?.filter(chat => 
     chat.buyerId === user?.id || chat.sellerId === user?.id
