@@ -1,6 +1,6 @@
 import { users, listings, chats, messages, rentalReturns, type User, type InsertUser, type Listing, type InsertListing, type Chat, type Message, type InsertMessage, type RentalReturn, type InsertRentalReturn } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, or } from "drizzle-orm";
+import { eq, and, desc, or, ne, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -182,13 +182,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async markMessagesAsRead(chatId: number, userId: number): Promise<void> {
-    const [chat] = await db.select().from(chats).where(eq(chats.id, chatId));
-    if (!chat) return;
-    const otherUserId = chat.buyerId === userId ? chat.sellerId : chat.buyerId;
-    
     await db.update(messages)
       .set({ read: true })
-      .where(and(eq(messages.chatId, chatId), eq(messages.senderId, otherUserId)));
+      .where(
+        and(
+          eq(messages.chatId, chatId), 
+          ne(messages.senderId, userId)
+        )
+      );
   }
 
   async deleteListing(id: number): Promise<void> {

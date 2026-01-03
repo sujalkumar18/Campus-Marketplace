@@ -38,13 +38,16 @@ export default function ChatDetail() {
     if (chatId && user?.id) {
       const markAsRead = async () => {
         try {
-          await fetch(`/api/chats/${chatId}/read`, { 
+          const res = await fetch(`/api/chats/${chatId}/read`, { 
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: user.id })
           });
-          // Invalidate chats list to update unread counts globally
-          queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+          if (res.ok) {
+            // Force invalidate and refetch all chat data
+            await queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+            await queryClient.refetchQueries({ queryKey: ["/api/chats"] });
+          }
         } catch (error) {
           console.error("Error marking messages as read:", error);
         }
@@ -52,7 +55,7 @@ export default function ChatDetail() {
       
       markAsRead();
     }
-  }, [chatId, user?.id, messages?.length]); // Use messages.length to trigger when new messages arrive
+  }, [chatId, user?.id, messages?.length]);
 
   useEffect(() => {
     if (scrollRef.current) {
