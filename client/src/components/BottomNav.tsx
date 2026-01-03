@@ -40,7 +40,7 @@ export function BottomNav() {
                     strokeWidth={isActive ? 2.5 : 2}
                     className={cn(isActive && "drop-shadow-md")}
                   />
-                  {badge > 0 && (
+                  {badge !== undefined && badge > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-destructive text-[10px] text-white rounded-full flex items-center justify-center border-2 border-white animate-pulse font-black">
                       {badge}
                     </span>
