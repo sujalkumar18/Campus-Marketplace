@@ -6,6 +6,7 @@ import { useUpdateListing } from "@/hooks/use-listings";
 import { ArrowLeft, Send, MoreVertical, Loader2, CheckCircle2, Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 const QUICK_REPLIES = [
   "I'm at the library",
@@ -39,6 +40,8 @@ export default function ChatDetail() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id })
+      }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
       });
     }
   }, [chatId, user?.id, messages]);
@@ -60,7 +63,7 @@ export default function ChatDetail() {
   });
 
   const confirmRentalMutation = useMutation({
-    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string }) => {
+    mutationFn: async (data: { id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date" | "verify_delivery_otp", date?: string, otp?: string }) => {
       const res = await fetch(`/api/rentals/${data.id}/confirm`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +93,17 @@ export default function ChatDetail() {
         })
       });
       refetchRental();
+    } else if (newStatus === "sold") {
+       await fetch("/api/rentals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId,
+          listingId: listing.id,
+          returnDate: new Date().toISOString(),
+        })
+      });
+      refetchRental();
     }
 
     const statusText = newStatus === "sold" ? "marked as sold" : 
@@ -103,7 +117,10 @@ export default function ChatDetail() {
     sendMessage(
       { chatId, content: text },
       {
-        onSuccess: () => setInputText("")
+        onSuccess: () => {
+          setInputText("");
+          queryClient.invalidateQueries({ queryKey: ["/api/chats"] });
+        }
       }
     );
   };
@@ -262,8 +279,46 @@ export default function ChatDetail() {
                       </div>
                     </div>
 
-                    {/* Integrated Rental Tracking - Shown after the very last message */}
-                    {isLastMessage && rental && (
+                    {isLastMessage && listing?.status === "sold" && (
+                      <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-2">
+                        <div className="space-y-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                          <p className="text-xs text-emerald-700 font-bold">Delivery OTP Verification</p>
+                          {rental?.deliveryOtpVerified ? (
+                            <p className="text-xs text-emerald-600 font-medium italic">✓ Delivery confirmed successfully</p>
+                          ) : isSeller ? (
+                            <div className="space-y-2 text-center">
+                              <p className="text-xs text-muted-foreground">Share this OTP with the buyer during delivery:</p>
+                              <div className="bg-white p-3 rounded-lg border border-emerald-200 text-xl font-black tracking-widest text-emerald-600">
+                                {rental?.deliveryOtp}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="text-xs text-muted-foreground">Enter the delivery OTP provided by the seller:</p>
+                              <div className="flex gap-2">
+                                <input 
+                                  id="delivery-otp-input"
+                                  placeholder="4-digit OTP"
+                                  className="flex-1 text-xs p-2 rounded border"
+                                  maxLength={4}
+                                />
+                                <button
+                                  onClick={() => {
+                                    const val = (document.getElementById('delivery-otp-input') as HTMLInputElement)?.value;
+                                    if (val) confirmRentalMutation.mutate({ id: rental?.id!, confirmedBy: "buyer", type: "verify_delivery_otp", otp: val });
+                                  }}
+                                  className="px-3 py-2 bg-emerald-600 text-white rounded text-[10px] font-bold"
+                                >
+                                  Verify Delivery
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {isLastMessage && rental && listing?.type === "rent" && (
                       <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 py-2">
                         <div className="space-y-3">
                           <div
@@ -440,45 +495,19 @@ export default function ChatDetail() {
                                             Verify
                                           </button>
                                         </div>
-                                        <button
-                                          disabled={rental.sellerConfirmed || !rental.returnOtpVerified || confirmRentalMutation.isPending}
-                                          onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "seller", type: "end" })}
-                                          className={cn(
-                                            "w-full py-2 rounded-lg text-xs font-bold transition-all",
-                                            rental.sellerConfirmed ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"
-                                          )}
-                                        >
-                                          {rental.sellerConfirmed ? "Return Confirmed" : rental.returnOtpVerified ? "Finalize Return" : "Verify OTP First"}
-                                        </button>
                                       </div>
                                     ) : (
-                                      <div className="space-y-2">
-                                        <p className="text-xs text-muted-foreground">Show this OTP to seller during return:</p>
-                                        <div className="bg-white p-3 rounded-lg border border-amber-200 text-center text-xl font-black tracking-widest text-amber-600">
+                                      <div className="space-y-2 text-center">
+                                        <p className="text-xs text-muted-foreground">Share this OTP with the seller during return:</p>
+                                        <div className="bg-white p-3 rounded-lg border border-amber-200 text-xl font-black tracking-widest text-amber-600">
                                           {rental.returnOtp}
                                         </div>
-                                        <button
-                                          disabled={rental.buyerConfirmed || !rental.returnOtpVerified || confirmRentalMutation.isPending}
-                                          onClick={() => confirmRentalMutation.mutate({ id: rental.id, confirmedBy: "buyer", type: "end" })}
-                                          className={cn(
-                                            "w-full py-2 rounded-lg text-xs font-bold transition-all",
-                                            rental.buyerConfirmed ? "bg-emerald-100 text-emerald-700" : 
-                                            rental.returnOtpVerified ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground cursor-not-allowed"
-                                          )}
-                                        >
-                                          {rental.buyerConfirmed ? "Campus Return Completed" : "Campus Return"}
-                                        </button>
-                                        {!rental.returnOtpVerified && (
-                                          <p className="text-[10px] text-center text-muted-foreground italic">
-                                            "Campus Return" will be available after seller verifies your OTP.
-                                          </p>
-                                        )}
                                       </div>
                                     )}
                                   </div>
                                 )}
-                              </div>
                             </div>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -487,49 +516,44 @@ export default function ChatDetail() {
               })}
             </div>
           )}
-          <div className="h-4" />
         </div>
       </div>
 
-      <div className="flex-none bg-white border-t border-border p-4 safe-area-bottom">
-        <div className="max-w-md mx-auto space-y-3">
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {QUICK_REPLIES.map((reply) => (
-              <button
-                key={reply}
-                onClick={() => handleSend(reply)}
-                className="whitespace-nowrap px-4 py-2 bg-muted hover:bg-muted/80 text-muted-foreground rounded-full text-xs font-medium transition-colors border border-border/50"
-              >
-                {reply}
-              </button>
-            ))}
-          </div>
-
-          <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSend();
-            }}
-            className="flex items-center gap-2"
-          >
-            <input
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Type a message..."
-              className="flex-1 bg-muted/50 border-none rounded-2xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 transition-all"
-            />
+      <div className="flex-none p-4 bg-background border-t border-border/50 max-w-md mx-auto w-full space-y-3">
+        <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {QUICK_REPLIES.map((reply) => (
             <button
-              type="submit"
-              disabled={!inputText.trim() || isSending}
-              className="p-2.5 bg-primary text-primary-foreground rounded-2xl hover:bg-primary/90 transition-all disabled:opacity-50 disabled:scale-95 active:scale-95 shadow-lg shadow-primary/20"
+              key={reply}
+              onClick={() => handleSend(reply)}
+              className="whitespace-nowrap px-3 py-1.5 bg-muted text-muted-foreground text-xs font-bold rounded-full hover:bg-primary/10 hover:text-primary transition-colors border border-border/50"
             >
-              {isSending ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
-              )}
+              {reply}
             </button>
-          </form>
+          ))}
+        </div>
+        
+        <div className="flex gap-3 items-center bg-muted/30 p-2 rounded-2xl border border-border/20 focus-within:border-primary/30 transition-all">
+          <input
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            placeholder="Type your message..."
+            className="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-1 text-foreground placeholder:text-muted-foreground/50"
+          />
+          <button
+            onClick={() => handleSend()}
+            disabled={!inputText.trim() || isSending}
+            className={cn(
+              "w-10 h-10 flex items-center justify-center rounded-xl transition-all shadow-sm",
+              inputText.trim() ? "bg-primary text-primary-foreground active:scale-95 shadow-primary/20" : "bg-muted text-muted-foreground opacity-50"
+            )}
+          >
+            {isSending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
         </div>
       </div>
     </div>

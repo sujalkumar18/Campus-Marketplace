@@ -26,8 +26,9 @@ export interface IStorage {
   // Rental Returns
   getRentalReturn(chatId: number): Promise<RentalReturn | undefined>;
   createRentalReturn(rental: InsertRentalReturn): Promise<RentalReturn>;
-  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string): Promise<RentalReturn>;
+  confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date" | "verify_delivery_otp", date?: string, otp?: string): Promise<RentalReturn>;
   markMessagesAsRead(chatId: number, userId: number): Promise<void>;
+  deleteListing(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -52,7 +53,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getListings(filters?: { category?: string; search?: string }): Promise<Listing[]> {
-    let query = db.select().from(listings).$dynamic();
+    let query = db.select().from(listings).where(eq(listings.status, "available")).$dynamic();
     
     if (filters?.category) {
       query = query.where(eq(listings.category, filters.category));
@@ -77,6 +78,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(listings.id, id))
       .returning();
     return listing;
+  }
+
+  async deleteListing(id: number): Promise<void> {
+    await db.delete(listings).where(eq(listings.id, id));
   }
 
   async getChats(userId: number): Promise<(Chat & { listing: Listing, otherUser: User })[]> {
@@ -136,7 +141,7 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
-  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string): Promise<RentalReturn> {
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date" | "verify_delivery_otp", date?: string, otp?: string): Promise<RentalReturn> {
     const [rental] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
     if (!rental) throw new Error("Rental not found");
 
@@ -159,6 +164,13 @@ export class DatabaseStorage implements IStorage {
       } else if (otp === rental.returnOtp) {
         updates.returnOtpVerified = true;
         updates.status = "completed";
+        // Mark product as available after return
+        await db.update(listings).set({ status: "available" }).where(eq(listings.id, rental.listingId));
+      }
+    } else if (type === "verify_delivery_otp" && otp) {
+      if (otp === rental.deliveryOtp) {
+        updates.deliveryOtpVerified = true;
+        updates.status = "completed";
       }
     }
 
@@ -177,6 +189,12 @@ export class DatabaseStorage implements IStorage {
     await db.update(messages)
       .set({ read: true })
       .where(and(eq(messages.chatId, chatId), eq(messages.senderId, otherUserId)));
+  }
+
+  async deleteListing(id: number): Promise<void> {
+    await db.delete(rentalReturns).where(eq(rentalReturns.listingId, id));
+    await db.delete(chats).where(eq(chats.listingId, id));
+    await db.delete(listings).where(eq(listings.id, id));
   }
 }
 

@@ -79,7 +79,13 @@ export const api = {
       method: 'GET' as const,
       path: '/api/chats',
       responses: {
-        200: z.array(z.custom<typeof chats.$inferSelect & { listing: typeof listings.$inferSelect, otherUser: typeof users.$inferSelect }>()),
+        200: z.array(z.custom<typeof chats.$inferSelect & { 
+          listing: typeof listings.$inferSelect, 
+          otherUser: typeof users.$inferSelect,
+          lastMessage: typeof messages.$inferSelect | null,
+          lastMessageAt: Date | string | null,
+          unreadCount: number
+        }>()),
       },
     },
     create: {

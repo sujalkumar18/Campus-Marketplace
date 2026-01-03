@@ -1,9 +1,11 @@
 import { BottomNav } from "@/components/BottomNav";
 import { useAuth } from "@/hooks/use-auth";
 import { useListings, useUpdateListing } from "@/hooks/use-listings";
-import { User, MapPin, LogOut, Package, CheckCircle2, CircleDashed } from "lucide-react";
+import { User, MapPin, LogOut, Package, CheckCircle2, CircleDashed, Trash2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -13,9 +15,27 @@ export default function Profile() {
   // Listings for the current unique visitor
   const myListings = listings?.filter(l => l.sellerId === user?.id) || [];
 
+  const { mutate: deleteListing } = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/listings/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/listings"] });
+    }
+  });
+
   const markAsSold = (id: number) => {
     updateListing({ id, status: "sold" });
   };
+
+  const handleDeleteListing = (id: number) => {
+    if (confirm("Are you sure you want to remove this listing?")) {
+      deleteListing(id);
+    }
+  };
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -89,20 +109,31 @@ export default function Profile() {
                       <p className="text-xs text-muted-foreground mt-0.5">₹{listing.price}</p>
                     </div>
                     
-                    {listing.status === 'available' ? (
-                      <button 
-                        onClick={() => markAsSold(listing.id)}
-                        className="self-start flex items-center gap-1 text-xs font-medium text-primary hover:bg-primary/5 px-2 py-1 rounded-md transition-colors"
-                      >
-                        <CircleDashed className="w-3.5 h-3.5" />
-                        Mark as Sold
-                      </button>
-                    ) : (
-                      <div className="self-start flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Sold
-                      </div>
-                    )}
+                    <div className="flex gap-2 mt-2">
+                      {listing.status === 'available' ? (
+                        <>
+                          <button 
+                            onClick={() => markAsSold(listing.id)}
+                            className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/5 hover:bg-primary/10 px-2 py-1.5 rounded-lg transition-all"
+                          >
+                            <CircleDashed className="w-3 h-3" />
+                            Sold
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteListing(listing.id)}
+                            className="flex items-center gap-1 text-[10px] font-bold text-destructive bg-destructive/5 hover:bg-destructive/10 px-2 py-1.5 rounded-lg transition-all"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Delete
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1.5 rounded-lg">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Sold
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

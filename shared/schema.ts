@@ -64,8 +64,10 @@ export const rentalReturns = pgTable("rental_returns", {
   sellerAgreedDate: boolean("seller_agreed_date").default(false),
   handoverOtp: text("handover_otp"),
   returnOtp: text("return_otp"),
+  deliveryOtp: text("delivery_otp"),
   handoverOtpVerified: boolean("handover_otp_verified").default(false),
   returnOtpVerified: boolean("return_otp_verified").default(false),
+  deliveryOtpVerified: boolean("delivery_otp_verified").default(false),
   isLate: boolean("is_late").default(false),
   penalty: integer("penalty").default(0),
   status: text("status").default("pending"), // pending | active | completed | late

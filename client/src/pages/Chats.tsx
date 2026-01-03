@@ -23,8 +23,14 @@ export default function Chats() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50 px-4 py-4">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto flex items-center justify-between">
           <h1 className="text-xl font-display font-bold text-foreground">Messages</h1>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">Active Chats:</span>
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-bold">
+              {filteredChats.length}
+            </span>
+          </div>
         </div>
       </header>
 
@@ -46,7 +52,7 @@ export default function Chats() {
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-lg relative">
                   {chat.otherUser?.username?.[0]?.toUpperCase() || "U"}
                   {chat.unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-[10px] text-white rounded-full flex items-center justify-center border-2 border-background animate-pulse font-black">
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-[10px] text-white rounded-full flex items-center justify-center border-2 border-white animate-pulse font-black z-10 shadow-sm">
                       {chat.unreadCount}
                     </span>
                   )}
@@ -58,7 +64,7 @@ export default function Chats() {
                       {chat.otherUser?.username || "Unknown User"}
                     </h3>
                     <span className="text-xs text-muted-foreground font-medium">
-                      {chat.lastMessageAt ? formatDistanceToNow(new Date(chat.lastMessageAt), { addSuffix: true }) : formatDistanceToNow(new Date(chat.createdAt), { addSuffix: true })}
+                      {chat.lastMessageAt ? formatDistanceToNow(new Date(chat.lastMessageAt), { addSuffix: true }) : formatDistanceToNow(new Date(chat.createdAt!), { addSuffix: true })}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">

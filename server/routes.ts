@@ -66,6 +66,11 @@ export async function registerRoutes(
     res.json(listing);
   });
 
+  app.delete("/api/listings/:id", async (req, res) => {
+    await storage.deleteListing(Number(req.params.id));
+    res.json({ success: true });
+  });
+
   // Chats Routes
   app.get(api.chats.list.path, async (req, res) => {
     // Expect userId in query for MVP simplicity
@@ -185,9 +190,10 @@ export async function registerRoutes(
 
   app.post("/api/rentals", async (req, res) => {
     const { chatId, listingId, returnDate } = req.body;
-    // Generate simple 4-digit OTPs for handover and return
+    // Generate simple 4-digit OTPs
     const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString();
     const returnOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    const deliveryOtp = Math.floor(1000 + Math.random() * 9000).toString();
     
     const rental = await storage.createRentalReturn({
       chatId,
@@ -195,6 +201,7 @@ export async function registerRoutes(
       returnDate: new Date(returnDate),
       handoverOtp,
       returnOtp,
+      deliveryOtp,
       status: "pending"
     });
     res.status(201).json(rental);
