@@ -136,6 +136,39 @@ export class DatabaseStorage implements IStorage {
     return rental;
   }
 
+  async confirmRentalReturn(id: number, confirmedBy: "buyer" | "seller", type: "start" | "end" | "date" | "verify_otp" | "reject_date", date?: string, otp?: string): Promise<RentalReturn> {
+    const [rental] = await db.select().from(rentalReturns).where(eq(rentalReturns.id, id));
+    if (!rental) throw new Error("Rental not found");
+
+    let updates: Partial<RentalReturn> = {};
+
+    if (type === "start") {
+      if (confirmedBy === "buyer") updates.buyerStarted = true;
+      else updates.sellerStarted = true;
+    } else if (type === "end") {
+      if (confirmedBy === "buyer") updates.buyerConfirmed = true;
+      else updates.sellerConfirmed = true;
+    } else if (type === "date" && date) {
+      updates.returnDate = new Date(date);
+      if (confirmedBy === "buyer") updates.buyerAgreedDate = true;
+      else updates.sellerAgreedDate = true;
+    } else if (type === "verify_otp" && otp) {
+      if (otp === rental.handoverOtp) {
+        updates.handoverOtpVerified = true;
+        updates.status = "active";
+      } else if (otp === rental.returnOtp) {
+        updates.returnOtpVerified = true;
+        updates.status = "completed";
+      }
+    }
+
+    const [updated] = await db.update(rentalReturns)
+      .set(updates)
+      .where(eq(rentalReturns.id, id))
+      .returning();
+    return updated;
+  }
+
   async markMessagesAsRead(chatId: number, userId: number): Promise<void> {
     const [chat] = await db.select().from(chats).where(eq(chats.id, chatId));
     if (!chat) return;
